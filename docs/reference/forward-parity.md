@@ -76,12 +76,12 @@ python -m pip install -e ".[test]"
 python -m pytest -q tests/
 ```
 
-The [public GitHub Actions workflow](../../.github/workflows/reference-tests.yml) uses a CPU build of PyTorch 2.11.0 and runs the same suite. A completed [public forward-reference run](https://github.com/yza-thu-eiri/msa-systems-lab/actions/runs/40892058862) reported **43 passed** across the released support, masked-dense and gathered-sparse tests. This does not validate manual backward or any benchmark result. Subsequent source changes must be judged against their own CI run.
+The [public GitHub Actions workflow](../../.github/workflows/reference-tests.yml) uses a CPU build of PyTorch 2.11.0 and runs the same suite. A completed [public forward-reference run](https://github.com/yza-thu-eiri/msa-systems-lab/actions/runs/40892058862) reported **43 passed** across the released support, masked-dense and gathered-sparse tests. Manual fixed-selection backward has since been released and [tested separately](manual-backward.md); this original forward-only run does not validate benchmark results. Subsequent source changes must be judged against their own CI run.
 
 ## What forward parity does and does not prove
 
 **It checks:** causal support, GQA head mapping, attention outputs, LSE, and the specified small-input error conditions.
 
-**It does not check:** the manual backward implementation (separate release), production-style metadata scheduling, kernel fusion, large-sequence execution, low-precision stability, exact determinism across GPU hardware, or faster inference.
+**The forward-parity checks alone do not check:** gradient correctness (see [the separately published backward analysis](manual-backward.md)), production-style metadata scheduling, kernel fusion, large-sequence execution, low-precision stability, exact determinism across GPU hardware, or faster inference.
 
 The follow-on engineering question is not to make this oracle fast; it is how to produce a separate GPU-friendly execution path whose numerical results remain accountable to this reference.
