@@ -29,6 +29,8 @@ CPU/CUDA 成本归因，不把 profiler 中的受扰时间当作基准延迟。
 
 from __future__ import annotations
 
+import argparse
+import json
 import statistics
 from collections.abc import Callable
 from pathlib import Path
@@ -90,7 +92,7 @@ PROFILE_STACK_DEPTH = 5
 
 # Chrome trace 的相对输出目录；从仓库根目录运行时，会输出到
 # <仓库根目录>/evidence/profiler_traces。
-PROFILE_TRACE_DIR = "evidence/profiler_traces"
+PROFILE_TRACE_DIR = "artifacts/p1-c05/profiler_traces"
 
 # endregion
 
@@ -542,20 +544,18 @@ def make_prefix_block_ids(
     和 [64:96]。因果规则仍会移除未来 token，因此有效 M 随行变化，不会恒等于
     ksel * block_size。
     """
-    # TODO(C05-E1): 验证 1 <= ksel <= N_BLOCKS。
+    # Reject selections outside the available prefix blocks.
     if not (1 <= ksel <= N_BLOCKS):
         raise ValueError(f"ksel must be between 1 and {N_BLOCKS}, but got {ksel}")
 
-    # TODO(C05-E1): 构造整数 CUDA 前缀行，并扩展到 B/N/HKV。
-    # 立即修复：DTYPE 是浮点 Q/K/V 数据类型。block ID 是选择元数据，必须改用
-    # torch.long 等整数类型；validate_fixed_block_ids 会拒绝当前浮点 arange。
+    # Block IDs are integer metadata, not floating-point Q/K/V values.
     prefix_row = torch.arange(ksel, device=DEVICE, dtype=torch.long)
 
     # reshape 让轴含义显式化，expand 随后创建跨 B/N/Hkv 共享的只读广播视图；
     # 它不会移动设备或改变数据类型。
     prefix_blocks_id = prefix_row.reshape(1, 1, 1, ksel).expand(B, N, HKV, ksel)
 
-    # TODO(C05-E1): 返回 block_ids 前调用 validate_fixed_block_ids。
+    # Validate metadata before returning it to the benchmark.
     validate_fixed_block_ids(
         block_ids=prefix_blocks_id,
         seq_len=N,
@@ -569,17 +569,17 @@ def summarize_effective_support(
     block_ids: torch.Tensor,
 ) -> dict[str, int | float]:
     """汇总一份选择张量产生的精确因果 token 支持集。"""
-    # TODO(C05-E1): 用 N 和 BLOCK_SIZE 调用 block_ids_to_group_mask。
+    # Expand selected blocks into the effective causal token support.
     # [B, N, Hkv, N]
     group_mask = block_ids_to_group_mask(
         block_ids=block_ids,
         seq_len=N,
         block_size=BLOCK_SIZE,
     )
-    # TODO(C05-E1): 沿 key 轴归约，得到每个 [B, N, Hkv] 行的 M。
+    # Count supported key tokens for every query/KV-head row.
     group_mask_row_count = group_mask.sum(dim=-1)
 
-    # TODO(C05-E1): 以 Python 标量返回 min_M、mean_M 和 max_M。
+    # Convert summary values to Python scalars outside the timed region.
     # 此台账位于所有 CUDA 事件计时区间之外，所以这里允许 .item() 触发同步。
     min_M = group_mask_row_count.min().item()
     max_M = group_mask_row_count.max().item()
@@ -994,6 +994,44 @@ def run_forward_profiling(
 
 
 def main() -> None:
+    parser = argparse.ArgumentParser(
+        description="Benchmark the P1 transparent attention references on a CUDA GPU."
+    )
+    parser.add_argument(
+        "--output-dir",
+        type=Path,
+        default=Path("artifacts/p1-c05"),
+        help="Directory for JSON results, profiler tables, and Chrome traces.",
+    )
+    parser.add_argument(
+        "--warmup",
+        type=int,
+        default=WARMUP,
+        help="Warmup calls per callable (default reproduces the historical scan).",
+    )
+    parser.add_argument(
+        "--repetitions",
+        type=int,
+        default=REPETITIONS,
+        help="CUDA Event samples per callable; use more for a fresh measurement.",
+    )
+    parser.add_argument(
+        "--skip-profile",
+        action="store_true",
+        help="Run the Ksel timing sweep without separate profiler sessions.",
+    )
+    args = parser.parse_args()
+    if args.warmup < 0:
+        parser.error("--warmup must be non-negative")
+    if args.repetitions <= 0:
+        parser.error("--repetitions must be positive")
+    if not torch.cuda.is_available():
+        raise SystemExit(
+            "CUDA is unavailable. Install a CUDA-enabled PyTorch build and run on an NVIDIA GPU."
+        )
+
+    args.output_dir.mkdir(parents=True, exist_ok=True)
+    trace_dir = str(args.output_dir / "profiler_traces")
     q, k, v, block_ids = make_smoke_fixture()
     validate_smoke_fixture(q, k, v, block_ids)
     print("C05-A 冒烟输入合同通过")
@@ -1005,9 +1043,32 @@ def main() -> None:
         k=k,
         v=v,
         ksel_values=KSEL_SWEEP,
-        warmup=WARMUP,
-        repetitions=REPETITIONS,
+        warmup=args.warmup,
+        repetitions=args.repetitions,
     )
+
+    metadata = {
+        "pytorch": torch.__version__,
+        "cuda_runtime": torch.version.cuda,
+        "gpu": torch.cuda.get_device_name(DEVICE),
+        "device": str(DEVICE),
+        "dtype": str(DTYPE),
+        "shape": {"B": B, "N": N, "Hq": HQ, "Hkv": HKV, "D": D, "block_size": BLOCK_SIZE},
+        "warmup": args.warmup,
+        "repetitions": args.repetitions,
+        "timing_method": "CUDA Events around the complete callable",
+        "warning": "Two samples reproduce a historical wiring check; they are not a stable performance estimate.",
+    }
+    result_path = args.output_dir / "benchmark_results.json"
+    result_path.write_text(
+        json.dumps(
+            {"metadata": metadata, "sweep": sweep_results},
+            indent=2,
+            sort_keys=True,
+        ) + "\n",
+        encoding="utf-8",
+    )
+    print(f"Environment and timing results: {result_path}")
 
     # 展示层只读取结果记录，不在打印过程中重新计时或计算支持集。
     for ksel, row in sweep_results.items():
@@ -1034,6 +1095,10 @@ def main() -> None:
     # 三种 backend 使用相同 Q/K/V、profile_block_ids 和 profiler 配置，
     # 但各自进入独立 profiler session。这里产生的表格和 trace 只用于
     # 解释成本结构，不覆盖前面 CUDA Event 基准得到的延迟。
+    if args.skip_profile:
+        print("Skipped Profiler via --skip-profile; CUDA Event results were saved.")
+        return
+
     profile_results = run_forward_profiling(
         q=q,
         k=k,
@@ -1046,8 +1111,26 @@ def main() -> None:
         repeat=PROFILE_REPEAT,
         row_limit=PROFILE_ROW_LIMIT,
         stack_depth=PROFILE_STACK_DEPTH,
-        trace_dir=PROFILE_TRACE_DIR,
+        trace_dir=trace_dir,
     )
+
+    table_dir = args.output_dir / "profiler_tables"
+    table_dir.mkdir(parents=True, exist_ok=True)
+    profile_manifest = {}
+    for backend_name, tables in profile_results.items():
+        profile_manifest[backend_name] = {"trace_path": tables["trace_path"]}
+        for table_name in (
+            "cuda_table", "cpu_table", "memory_table", "flops_table", "stack_table"
+        ):
+            table_path = table_dir / f"{backend_name}_{table_name}.txt"
+            table_path.write_text(tables[table_name] + "\n", encoding="utf-8")
+            profile_manifest[backend_name][table_name] = table_path.as_posix()
+    profile_path = args.output_dir / "profiler_results.json"
+    profile_path.write_text(
+        json.dumps(profile_manifest, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    print(f"Profiler tables and trace index: {profile_path}")
 
     # 这里只展示已生成的字符串和文件路径，不会重新执行 backend。
     # 每个 backend 依次展示 CUDA、CPU、内存、FLOPs、调用栈五种聚合
