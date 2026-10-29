@@ -49,10 +49,10 @@ A transparent correctness reference is expected to be readable, not fast. Any op
 | Project overview | Published |
 | P1 sparse reference execution case study | Published; underlying source/evidence pending |
 | P2 routing-to-task case study | Published; underlying source/evidence pending |
-| Fixed-support causal contract | [Source](../src/msa_lab/contracts/support.py) and [tests](../tests/test_support.py) published; independent check pending |\n| Masked-dense and gathered forward references | Pending source and dependency review |
+| Fixed-support causal contract | [Source](../src/msa_lab/contracts/support.py) and [tests](../tests/test_support.py) published; [public CPU acceptance run passed](https://github.com/yza-thu-eiri/msa-systems-lab/actions/runs/40890498194) |\n| Masked-dense and gathered forward references | Pending source and dependency review |
 | Output/LSE and backward parity tests | Pending |
 | P1 benchmark harness, logs, profiler extracts | Pending |
 | P2 training and intervention scripts/configs | Pending |
 | GPU kernel implementation and speedup measurements | Not yet established |
 
-The causal-support contract is now public as a minimal inspectable reference slice, with a [provenance note](reference/causal-support.md) and a CPU test workflow. Publication of source/tests does **not** by itself certify a public passing test run.\n\nThe README and individual case studies should be updated each time their reproducibility level changes. No performance or training result is promoted to a stronger claim level simply because the prose was published.
+The causal-support contract is now public as a minimal inspectable reference slice, with a [provenance note](reference/causal-support.md) and a CPU test workflow. The first public support-test workflow completed successfully; its success covers only the released causal-support slice, not the larger unreleased Phase 1/2 code or reported training/benchmark evidence.\n\nThe README and individual case studies should be updated each time their reproducibility level changes. No performance or training result is promoted to a stronger claim level simply because the prose was published.
