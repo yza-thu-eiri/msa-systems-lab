@@ -23,7 +23,7 @@ permissions:
 
 jobs:
   cpu-reference:
-    name: P1 reference acceptance (CPU)
+    name: P1/P2 reference acceptance (CPU)
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
@@ -43,3 +43,5 @@ jobs:
         run: python -m pytest tests/
       - name: Run fixed-support walkthrough
         run: python examples/fixed_support_walkthrough.py
+      - name: Run P2 router walkthrough
+        run: python examples/routing_walkthrough.py
