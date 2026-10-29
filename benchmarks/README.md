@@ -39,3 +39,8 @@ The output directory contains raw CUDA Event samples, software/hardware metadata
 - [Case Study 01](../docs/case-studies/01-fewer-flops-slower-execution.md)
 
 The historical raw Profiler table was collected on 2026-08-29. The CUDA Event sweep was recorded on 2026-08-30. They are separate runs and should not be interpreted as synchronized observations.
+
+
+## Runtime setup
+
+The historical GPU environment was PyTorch 2.11.0+cu128 with CUDA runtime 12.8. Install a CUDA-enabled PyTorch wheel compatible with the local NVIDIA driver, then install this repository in editable mode. The public CPU CI environment validates Python helpers and reference semantics; it does not validate GPU performance.
