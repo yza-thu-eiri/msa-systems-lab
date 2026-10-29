@@ -6,7 +6,7 @@
 
 A correctness-first engineering investigation of **block-sparse attention**, **learned routing**, and the gap between **reduced mathematical work** and **faster hardware execution**.
 
-> **Release status:** The first two technical case studies and the P1 forward/backward correctness references and tests are public. The public CPU acceptance suite passed **51 tests**. The P1 benchmark harness and selected historical GPU evidence are now public; those historical measurements have not yet been independently re-run from this release. P2 training artifacts remain pending.
+> **Release status:** The first two technical case studies and the P1 forward/backward correctness references and tests are public. The public CPU acceptance suite now passes **53 tests**, including benchmark-harness helper checks. The P1 benchmark harness and selected historical GPU evidence are now public; those historical measurements have not yet been independently re-run from this release. P2 training artifacts remain pending.
 >
 > **Scope:** Independent reproduction and systems analysis—not an official MiniMax implementation, a production attention library, or a claim of a new attention algorithm.
 
@@ -70,6 +70,7 @@ A small-model block router reached a persistent Routing-KL plateau near **0.205*
 | Causal support contract | Phase 1 internally verified; [public CPU acceptance check passed](https://github.com/yza-thu-eiri/msa-systems-lab/actions/runs/40890498194) | [Source](src/msa_lab/contracts/support.py) · [Tests](tests/test_support.py) · [Contract](docs/reference/causal-support.md) |
 | Masked-dense / gathered sparse forward | Phase 1 internally verified; [43 public CPU tests passed](https://github.com/yza-thu-eiri/msa-systems-lab/actions/runs/40892058862) (support + both forward paths) | [Forward parity](docs/reference/forward-parity.md) · [Oracle](src/msa_lab/reference/masked_dense.py) · [Gathered](src/msa_lab/reference/gathered_sparse.py) · [Tests](tests/) |
 | Manual fixed-selection backward | Frozen P1 reference; [51-test public suite passed](https://github.com/yza-thu-eiri/msa-systems-lab/actions/runs/40892923837) | [Gradient derivation](docs/reference/manual-backward.md) · [Source](src/msa_lab/reference/gathered_sparse_backward.py) · [Autograd tests](tests/test_gathered_sparse_backward.py) · [Finite differences](tests/test_backward_finite_difference.py) |
+| P1 CUDA benchmark harness | Publicly inspectable; CPU helper tests included in the [53-test CI run](https://github.com/yza-thu-eiri/msa-systems-lab/actions/runs/40898609639) | [Harness](benchmarks/reference/benchmark_forward.py) · [Run guide](benchmarks/README.md) · [Historical evidence](evidence/p1_c05_gpu_facts.md) |
 | Learned routing, mode switching, exact resume, one-/two-layer diagnosis | Phase 2 internally verified; 77 regression tests recorded | Case Study 02; source/configs pending |
 | GPU-friendly Triton/kernel execution and speedup | **Not established** | Future work |
 | Irregular metadata, backward scheduling, inference runtime | **Not established** | Future work |
@@ -82,7 +83,7 @@ Run `python examples/fixed_support_walkthrough.py` after installing the package 
 
 - **Fast technical review:** Start with [Case Study 01](docs/case-studies/01-fewer-flops-slower-execution.md) and [Case Study 02](docs/case-studies/02-routing-error-and-task-impact.md).
 - **Evidence discipline and release queue:** [Publication and evidence standards](docs/PUBLICATION.md).
-- **Correctness-first code:** Read the [causal-support contract](docs/reference/causal-support.md), [same-support forward parity](docs/reference/forward-parity.md), and [manual backward derivation](docs/reference/manual-backward.md). The full public CPU correctness suite [passed 51 tests](https://github.com/yza-thu-eiri/msa-systems-lab/actions/runs/40892923837), including a finite-difference gradient check.
+- **Correctness-first code:** Read the [causal-support contract](docs/reference/causal-support.md), [same-support forward parity](docs/reference/forward-parity.md), and [manual backward derivation](docs/reference/manual-backward.md). The full public CPU correctness suite [passed 53 tests](https://github.com/yza-thu-eiri/msa-systems-lab/actions/runs/40898609639), including a finite-difference gradient check and benchmark-harness helper checks.
 - **Run the released tests:** Use Python 3.12, install with `python -m pip install -e ".[test]"`, then `python -m pytest tests/`. For CPU-only PyTorch, see the [CI installation workflow](.github/workflows/reference-tests.yml).
 - **Further reproducibility:** GPU benchmark harnesses, P2 training scripts and selected raw experimental artifacts remain separate review/release tasks. Their claims retain the recorded-internal-evidence label.
 
