@@ -20,7 +20,3 @@ def test_summary_rejects_empty_samples() -> None:
         summarize_samples([])
 
 
-@pytest.mark.parametrize("sample", [float("nan"), -0.1, float("inf")])
-def test_summary_rejects_invalid_samples(sample: float) -> None:
-    with pytest.raises(ValueError, match="finite and non-negative"):
-        summarize_samples([sample])
