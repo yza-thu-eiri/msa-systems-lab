@@ -52,7 +52,7 @@ A transparent correctness reference is expected to be readable, not fast. Any op
 | Fixed-support causal contract | [Source](../src/msa_lab/contracts/support.py) and [tests](../tests/test_support.py) published; [public CPU acceptance run passed](https://github.com/yza-thu-eiri/msa-systems-lab/actions/runs/40890498194) |
 | Masked-dense and gathered forward references | [Oracle](../src/msa_lab/reference/masked_dense.py), [gathered](../src/msa_lab/reference/gathered_sparse.py), [forward parity guide](reference/forward-parity.md), and [public passing CPU tests](https://github.com/yza-thu-eiri/msa-systems-lab/actions/runs/40891800371) |
 | Output/LSE and fixed-selection backward parity tests | [Frozen source](../src/msa_lab/reference/gathered_sparse_backward.py), [7 original gradient acceptance cases](../tests/test_gathered_sparse_backward.py), [independent finite differences](../tests/test_backward_finite_difference.py) published; [51 public tests passed](https://github.com/yza-thu-eiri/msa-systems-lab/actions/runs/40892923837) |
-| P1 benchmark harness, logs, profiler extracts | Pending |
+| P1 benchmark harness, logs, profiler extracts | Published; see benchmark README and P1 evidence files |
 | P2 training and intervention scripts/configs | Pending |
 | GPU kernel implementation and speedup measurements | Not yet established |
 
