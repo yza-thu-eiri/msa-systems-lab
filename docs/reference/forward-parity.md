@@ -76,7 +76,7 @@ python -m pip install -e ".[test]"
 python -m pytest -q tests/
 ```
 
-The [public GitHub Actions workflow](../../.github/workflows/reference-tests.yml) uses a CPU build of PyTorch 2.11.0 and runs the same suite. Verify the current workflow result before attributing a public pass to a particular source version.
+The [public GitHub Actions workflow](../../.github/workflows/reference-tests.yml) uses a CPU build of PyTorch 2.11.0 and runs the same suite. A completed [public forward-reference run](https://github.com/yza-thu-eiri/msa-systems-lab/actions/runs/40892058862) reported **43 passed** across the released support, masked-dense and gathered-sparse tests. This does not validate manual backward or any benchmark result. Subsequent source changes must be judged against their own CI run.
 
 ## What forward parity does and does not prove
 
