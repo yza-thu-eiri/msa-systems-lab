@@ -85,7 +85,19 @@ python -m pip install -e ".[test]"
 python -m pytest tests/test_gathered_sparse_backward.py tests/test_backward_finite_difference.py
 ```
 
-For the whole public correctness suite, run `python -m pytest tests/`. The [GitHub Actions workflow](../../.github/workflows/reference-tests.yml) performs the CPU test suite on every source/test change.
+For the whole public correctness suite, run `python -m pytest tests/`. The [GitHub Actions workflow](../../.github/workflows/reference-tests.yml) runs the CPU test suite and the [fixed-support walkthrough](../../examples/fixed_support_walkthrough.py).
+
+The [public validation run](https://github.com/yza-thu-eiri/msa-systems-lab/actions/runs/40893375700) completed successfully with **51 passing tests**, followed by a passing standalone walkthrough. In its deterministic FP64 CPU example, the printed maximum differences were:
+
+| Compared quantity | Maximum absolute difference |
+| --- | ---: |
+| Masked vs gathered output | `0.000e+00` |
+| Masked vs gathered LSE | `0.000e+00` |
+| Manual vs masked-autograd dQ | `2.220e-16` |
+| Manual vs masked-autograd dK | `4.996e-16` |
+| Manual vs masked-autograd dV | `2.220e-16` |
+
+Those are observed values for the *specified tiny CPU example*, not a general precision bound.
 
 ## What this demonstrates—and what it does not
 
