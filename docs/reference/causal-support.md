@@ -45,7 +45,7 @@ python -m pip install -e ".[test]"
 python -m pytest -q tests/test_support.py
 ```
 
-**Evidence boundary:** the full Phase 1 acceptance matrix passed in the private development environment. This public subset has been released for review, but the commands above have **not yet been executed from an independent checkout**. Until a public CI or local rerun is observed, do not label the public tests as passing.
+**Public validation:** the first [GitHub Actions CPU acceptance run](https://github.com/yza-thu-eiri/msa-systems-lab/actions/runs/40890498194) completed successfully against public commit `7e3a217`. The public job installed PyTorch, installed the package, and ran `tests/test_support.py`. This verifies the **published causal-support test slice**, not the unreleased forward/backward references or the entire private Phase 1 test matrix.
 
 ## Why this comes first
 
