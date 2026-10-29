@@ -49,10 +49,10 @@ A transparent correctness reference is expected to be readable, not fast. Any op
 | Project overview | Published |
 | P1 sparse reference execution case study | Published; underlying source/evidence pending |
 | P2 routing-to-task case study | Published; underlying source/evidence pending |
-| Fixed-support contract and forward oracle/reference | Pending source and dependency review |
+| Fixed-support causal contract | [Source](../src/msa_lab/contracts/support.py) and [tests](../tests/test_support.py) published; independent check pending |\n| Masked-dense and gathered forward references | Pending source and dependency review |
 | Output/LSE and backward parity tests | Pending |
 | P1 benchmark harness, logs, profiler extracts | Pending |
 | P2 training and intervention scripts/configs | Pending |
 | GPU kernel implementation and speedup measurements | Not yet established |
 
-The README and individual case studies should be updated each time their reproducibility level changes. No performance or training result is promoted to a stronger claim level simply because the prose was published.
+The causal-support contract is now public as a minimal inspectable reference slice, with a [provenance note](reference/causal-support.md) and a CPU test workflow. Publication of source/tests does **not** by itself certify a public passing test run.\n\nThe README and individual case studies should be updated each time their reproducibility level changes. No performance or training result is promoted to a stronger claim level simply because the prose was published.
