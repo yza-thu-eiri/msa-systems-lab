@@ -1027,7 +1027,7 @@ def main() -> None:
         "warmup": args.warmup,
         "repetitions": args.repetitions,
         "timing_method": "CUDA Events around the complete callable",
-        "warning": "Two samples reproduce a historical wiring check; they are not a stable performance estimate.",
+        "warning": "The default two-sample run is diagnostic; inspect each run\u2019s recorded settings and raw samples.",
     }
     result_path = args.output_dir / "benchmark_results.json"
     result_path.write_text(
