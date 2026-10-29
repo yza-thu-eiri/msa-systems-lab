@@ -2,6 +2,8 @@
 
 **From sparse-attention semantics to GPU execution.**
 
+[![Reference checks](https://github.com/yza-thu-eiri/msa-systems-lab/actions/workflows/reference-tests.yml/badge.svg)](https://github.com/yza-thu-eiri/msa-systems-lab/actions/workflows/reference-tests.yml)
+
 A correctness-first engineering investigation of **block-sparse attention**, **learned routing**, and the gap between **reduced mathematical work** and **faster hardware execution**.
 
 > **Release status:** The first two technical case studies and the P1 causal-support source/tests are public. Other source, configs, and raw experimental evidence are being selected for incremental release. The recorded internal results below are **not yet independently reproducible from this public repository**.
