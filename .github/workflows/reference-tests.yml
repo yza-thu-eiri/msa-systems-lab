@@ -6,12 +6,14 @@ on:
     paths:
       - 'src/**'
       - 'tests/**'
+      - 'examples/**'
       - 'pyproject.toml'
       - '.github/workflows/reference-tests.yml'
   pull_request:
     paths:
       - 'src/**'
       - 'tests/**'
+      - 'examples/**'
       - 'pyproject.toml'
       - '.github/workflows/reference-tests.yml'
 
@@ -36,3 +38,5 @@ jobs:
           python -m pip install numpy==2.5.1 pytest==9.1.1
       - name: Run released reference acceptance tests
         run: python -m pytest tests/
+      - name: Run fixed-support walkthrough
+        run: python examples/fixed_support_walkthrough.py
