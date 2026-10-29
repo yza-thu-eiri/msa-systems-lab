@@ -44,6 +44,8 @@ A transparent gathered reference reduced main QK/PV arithmetic by **2.65×** ver
 
 **[Read Case Study 01 — Fewer FLOPs, Slower Sparse Attention](docs/case-studies/01-fewer-flops-slower-execution.md)**
 
+Benchmark artifacts: [CUDA harness](benchmarks/reference/benchmark_forward.py) · [reproduction guide](benchmarks/README.md) · [A4000 timing CSV](evidence/p1_c05_a4000.csv) · [raw Profiler tables](evidence/profiler_tables/minimal_self_time_tables.txt).
+
 *Measurement boundary: complete PyTorch/Python forward callables including validation and support construction, after two warmups and with only two timing samples. These are not statistically stable performance estimates, and do not measure an optimized sparse GPU kernel.*
 
 ### 02 · Routing error is not task failure
