@@ -2,7 +2,7 @@
 
 > **Question:** Why did a gathered sparse-attention implementation run slower than a masked-dense implementation, despite calculating fewer query–key interactions?
 >
-> **Status:** Analysis of recorded internal measurements. The public source, benchmark harness, and raw profiler artifacts are being curated for release; this case is **not yet independently reproducible from this repository**.
+> **Status:** The benchmark harness and selected historical evidence are public. The A4000 measurements below remain historical recorded observations and have **not yet been independently re-run from this public release**; reproduction instructions are now available.
 
 ## 1. Three implementations, three distinct jobs
 
@@ -94,4 +94,14 @@ An optimized sparse kernel must report a named baseline, matching correctness se
 
 **Not established:** long-context or low-precision behavior, stable benchmark distributions, optimal GQA memory traffic, fused sparse-kernel performance, any general claim that sparse attention is slower than dense attention.
 
-**Release status:** The reviewed analysis is published first. Source, focused tests, harness, and selected raw evidence will be added as separate, verifiable commits.
+## 7. Reproduction artifacts
+
+- [Benchmark harness](../../benchmarks/reference/benchmark_forward.py) — CUDA Event sweep and scheduled Profiler collection.
+- [Reproduction guide](../../benchmarks/README.md) — environment, commands, output files, and measurement boundaries.
+- [Historical measurement record](../../evidence/p1_c05_gpu_facts.md) — environment, support counts, latency, FLOPs, and interpretation.
+- [Machine-readable A4000 sweep](../../evidence/p1_c05_a4000.csv) — four Ksel points with recorded medians and sample counts.
+- [Raw aggregate Profiler tables](../../evidence/profiler_tables/minimal_self_time_tables.txt) — original operator tables from a separate 2026-08-29 profiler session.
+
+The harness writes raw timing samples and local Profiler artifacts to an ignored output directory. The historical tables are published for inspection, but the historical medians remain a two-sample diagnostic rather than stable latency estimates. A fresh GPU run is required before claiming independent reproduction.
+
+
