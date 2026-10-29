@@ -475,7 +475,7 @@ def run_forward_timing(
 def summarize_samples(
     samples_ms: list[float],
 ) -> dict[str, int | float]:
-    """Summarize raw CUDA Event samples; two samples are diagnostic only."""
+    """Summarize CUDA Event samples."""
     if not samples_ms:
         raise ValueError("samples_ms must be non-empty")
 
