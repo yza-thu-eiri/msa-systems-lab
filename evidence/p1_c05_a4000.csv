@@ -1,0 +1,5 @@
+recorded_date,hardware,gpu_arch,pytorch,cuda_runtime,dtype,B,N,Hq,Hkv,D,block_size,ksel,min_effective_M,mean_effective_M,max_effective_M,warmup,repetitions,dense_cuda_event_median_ms,masked_dense_cuda_event_median_ms,gathered_sparse_cuda_event_median_ms
+2026-08-30,NVIDIA RTX A4000,SM86,2.11.0+cu128,12.8,float32,1,128,8,2,64,32,1,1,28.125,32,2,2,0.080,94.062,192.512
+2026-08-30,NVIDIA RTX A4000,SM86,2.11.0+cu128,12.8,float32,1,128,8,2,64,32,2,1,48.250,64,2,2,0.060,126.732,229.488
+2026-08-30,NVIDIA RTX A4000,SM86,2.11.0+cu128,12.8,float32,1,128,8,2,64,32,3,1,60.375,96,2,2,0.071,155.844,261.577
+2026-08-30,NVIDIA RTX A4000,SM86,2.11.0+cu128,12.8,float32,1,128,8,2,64,32,4,1,64.500,128,2,2,0.060,180.553,294.738
