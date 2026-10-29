@@ -91,7 +91,7 @@ class KForwardSweepRow(TypedDict):
 
 
 class ForwardProfileTables(TypedDict):
-    """保存一个前向可调用对象的教学版 profiler 证据。"""
+    """Store aggregate profiler outputs for one forward callable."""
 
     # 下面五张表都来自同一份 ACTIVE 事件，只是分组和排序方式不同。
     cuda_table: str
@@ -631,7 +631,7 @@ def profile_cuda_callable(
     """对一个零参数 CUDA forward 生成多维 profiler 归因证据。
 
     函数按以下顺序工作：
-    1. 验证教学配置；
+    1. Validate the profiling configuration;
     2. 在 profiler 外预热并同步；
     3. 准备 trace 目录和 callback 共享结果容器；
     4. 构造 WAIT/WARMUP/ACTIVE schedule；
