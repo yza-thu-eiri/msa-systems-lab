@@ -72,6 +72,10 @@ A small-model block router reached a persistent Routing-KL plateau near **0.205*
 | GPU-friendly Triton/kernel execution and speedup | **Not established** | Future work |
 | Irregular metadata, backward scheduling, inference runtime | **Not established** | Future work |
 
+## One-command correctness demo
+
+Run `python examples/fixed_support_walkthrough.py` after installing the package to see causal supports, forward O/LSE parity, and manual backward gradient errors. [View the example](examples/fixed_support_walkthrough.py). This is a CPU correctness check, not a benchmark.
+
 ## How to navigate
 
 - **Fast technical review:** Start with [Case Study 01](docs/case-studies/01-fewer-flops-slower-execution.md) and [Case Study 02](docs/case-studies/02-routing-error-and-task-impact.md).
