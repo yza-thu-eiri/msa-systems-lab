@@ -1,30 +1,14 @@
-"""P1-C05：面向冻结版 Phase 1 可调用对象的学习者前向基准。
+"""CUDA Event benchmark and PyTorch Profiler harness for P1 reference paths.
 
-已完成的学习层
---------------
-C05-A 构造并验证一组确定性的 CUDA 测试输入及合法固定选择元数据。C05-B 对
-稠密 SDPA、掩码稠密语义标准和聚集稀疏参考实现进行冒烟调用，并且只比较两个
-选中支持集实现的数值等价性。C05-C 用零参数闭包统一三种不同接口，并通过
-CUDA 事件采集原始延迟样本。C05-D 汇总样本数量、中位数、最小值和最大值。
-C05-E 将受控前缀元数据、精确有效支持集台账和三种实现的计时结果
-组织成每个 Ksel 一条记录的前向扫描。C05-F 对三种可调用对象分别进行
-CPU/CUDA 成本归因，不把 profiler 中的受扰时间当作基准延迟。
+The sweep compares Dense SDPA, masked-dense GQA, and gathered sparse GQA
+on fixed prefix selections. Masked/gathered output and LSE parity is checked
+before timing; Dense SDPA is a full-history engineering baseline, not a
+same-support correctness oracle.
 
-顶层实验设计
-------------
-本文件先固定实验问题和结果结构，再进入单个函数实现。Q/K/V 在 Ksel
-扫描中保持不变；每个 Ksel 先构造合法选择元数据，然后进行正确性门禁、
-有效支持集汇总、CUDA 计时与样本归约。最终记录只保留可解释工作量和
-延迟的证据；block_ids、Attention 输出和闭包都是过程数据。
-
-测量边界
---------
-计时刻意覆盖完整冻结版可调用对象，包括内部支持集展开与校验、Python 控制流、
-间接聚集、内存分配、小算子、内核启动以及可能的流空闲间隔。测试输入构造和
-正确性断言位于 CUDA 事件区间之外。
-
-当前固定配置结果只证明基准接线正确，并暴露参考实现成本；它不能证明生产级
-内核速度、稳定分位数证据或参数扫描结论。不得为了本文件优化冻结的 C01-C04 源码。
+Timing covers the complete callable. Profiler output explains execution
+structure and is not used as a latency estimate. The default two-sample
+configuration preserves the historical wiring check and is not statistically
+stable.
 """
 
 from __future__ import annotations
@@ -123,7 +107,7 @@ class ForwardProfileTables(TypedDict):
 # endregion
 
 
-# region C05-A — 冒烟测试输入与输入合同
+# Input fixture and metadata contract
 
 
 def make_smoke_fixture() -> tuple[
@@ -133,7 +117,7 @@ def make_smoke_fixture() -> tuple[
     torch.Tensor,
 ]:
     """构造 Q/K/V 和合法固定选择元数据，用于冒烟运行。"""
-    # C05-A：构造固定、可复现的 CUDA 冒烟测试输入。
+    # Create deterministic CUDA smoke-test inputs.
 
     # 在函数内部重新设种子，使重复调用产生相同的 Q/K/V；manual_seed 会重置
     # PyTorch 全局随机数生成器状态，而不是为本函数创建私有生成器。
@@ -177,7 +161,7 @@ def validate_smoke_fixture(
     block_ids: torch.Tensor,
 ) -> None:
     """在调用任何注意力实现之前验证冒烟测试输入。"""
-    # C05-A：在调用注意力前，先把测试输入错误与可调用对象错误隔离开。
+    # Validate the fixture before calling any implementation.
     # 1. C01 元数据合同
     validate_fixed_block_ids(
         block_ids=block_ids,
@@ -220,7 +204,7 @@ def validate_smoke_fixture(
 # endregion
 
 
-# region C05-B — 前向冒烟与语义等价性
+# Forward smoke checks and same-support parity
 
 
 def assert_tensor_contract(
@@ -330,7 +314,7 @@ def run_smoke_forward(
 # endregion
 
 
-# region C05-C — CUDA 事件计时
+# CUDA Event timing
 
 
 def measure_cuda_ms(
@@ -350,7 +334,7 @@ def measure_cuda_ms(
     各放置 CUDA 同步，从而测量主机调用者观察到的端到端延迟。两种指标回答不同
     问题，不能在不说明的情况下相互替换。
     """
-    # C05-C1 职责边界：
+    # Timing boundary:
     # - fn 已经通过闭包绑定 Q/K/V 和后端专用参数；
     # - 测试输入创建与正确性断言必须留在本函数之外；
     # - 计时器只负责预热、同步、CUDA 事件和原始毫秒样本。
@@ -486,24 +470,12 @@ def run_forward_timing(
 # endregion
 
 
-# region C05-D — 样本汇总
+# Timing sample summaries
 
 def summarize_samples(
     samples_ms: list[float],
 ) -> dict[str, int | float]:
-    """汇总一个非空的 CUDA 事件原始样本列表。
-
-    本检查点学到的 Python 语法：
-    - 函数签名中的单独 ``*`` 会使后续参数只能按关键字传递；如果后面没有具名
-      参数，单独 ``*`` 就是非法语法；
-    - 逗号负责构造元组，因此 ``value = expression,`` 得到单元素元组，而不是
-      本返回合同期望的标量。
-
-    统计说明：
-    - 使用标准库的中位数、最小值和最大值工具，不手写排序；
-    - 样本数为偶数时，中位数是中间两个值的平均数；
-    - 只有两次重复时，汇总只能验证接线，尚不能作为稳定或抗异常值的性能估计。
-    """
+    """Summarize raw CUDA Event samples; two samples are diagnostic only."""
     if not samples_ms:
         raise ValueError("samples_ms must be non-empty")
 
@@ -524,7 +496,7 @@ def summarize_samples(
 # endregion
 
 
-# region C05-E — K 扫描编排与证据台账
+# Ksel sweep and evidence ledger
 
 
 def make_prefix_block_ids(
@@ -640,7 +612,7 @@ def run_k_forward_sweep(
 # endregion
 
 
-# region C05-F — CPU/CUDA 成本归因
+# CPU/CUDA Profiler attribution
 
 
 def profile_cuda_callable(
@@ -988,7 +960,7 @@ def run_forward_profiling(
 # endregion
 
 
-# region 程序入口
+# CLI entry point
 
 
 def main() -> None:
@@ -1032,7 +1004,7 @@ def main() -> None:
     trace_dir = str(args.output_dir / "profiler_traces")
     q, k, v, block_ids = make_smoke_fixture()
     validate_smoke_fixture(q, k, v, block_ids)
-    print("C05-A 冒烟输入合同通过")
+    print("Benchmark input contract passed")
 
     # 这是顶层实验入口：一次调用生成所有 Ksel 实验点的完整证据。
     # 当前只用两次预热和两个样本验证扫描接线，不能作为稳定性能结论。
