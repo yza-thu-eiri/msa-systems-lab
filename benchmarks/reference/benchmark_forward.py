@@ -90,9 +90,7 @@ PROFILE_ROW_LIMIT = 20
 # 按调用栈聚合时，把最近多少层栈作为分组键。
 PROFILE_STACK_DEPTH = 5
 
-# Chrome trace 的相对输出目录；从仓库根目录运行时，会输出到
-# <仓库根目录>/evidence/profiler_traces。
-PROFILE_TRACE_DIR = "artifacts/p1-c05/profiler_traces"
+# Chrome traces are written under the CLI output directory and are ignored by Git.
 
 # endregion
 
