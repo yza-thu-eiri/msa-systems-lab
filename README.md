@@ -66,7 +66,7 @@ A small-model block router reached a persistent Routing-KL plateau near **0.205*
 | System component | Evidence maturity | Public artifact |
 | --- | --- | --- |
 | Causal support contract | Phase 1 internally verified; [public CPU acceptance check passed](https://github.com/yza-thu-eiri/msa-systems-lab/actions/runs/40890498194) | [Source](src/msa_lab/contracts/support.py) · [Tests](tests/test_support.py) · [Contract](docs/reference/causal-support.md) |
-| Masked-dense / gathered sparse forward | Phase 1 internally verified; [public CPU tests passed](https://github.com/yza-thu-eiri/msa-systems-lab/actions/runs/40891800371) | [Forward parity](docs/reference/forward-parity.md) · [Oracle](src/msa_lab/reference/masked_dense.py) · [Gathered](src/msa_lab/reference/gathered_sparse.py) · [Tests](tests/) |
+| Masked-dense / gathered sparse forward | Phase 1 internally verified; [43 public CPU tests passed](https://github.com/yza-thu-eiri/msa-systems-lab/actions/runs/40892058862) (support + both forward paths) | [Forward parity](docs/reference/forward-parity.md) · [Oracle](src/msa_lab/reference/masked_dense.py) · [Gathered](src/msa_lab/reference/gathered_sparse.py) · [Tests](tests/) |
 | Manual fixed-selection backward | Phase 1 internally verified | Source and gradient parity tests pending |
 | Learned routing, mode switching, exact resume, one-/two-layer diagnosis | Phase 2 internally verified; 77 regression tests recorded | Case Study 02; source/configs pending |
 | GPU-friendly Triton/kernel execution and speedup | **Not established** | Future work |
@@ -76,7 +76,7 @@ A small-model block router reached a persistent Routing-KL plateau near **0.205*
 
 - **Fast technical review:** Start with [Case Study 01](docs/case-studies/01-fewer-flops-slower-execution.md) and [Case Study 02](docs/case-studies/02-routing-error-and-task-impact.md).
 - **Evidence discipline and release queue:** [Publication and evidence standards](docs/PUBLICATION.md).
-- **Correctness-first code:** [Causal support contract](docs/reference/causal-support.md) and [forward parity](docs/reference/forward-parity.md) explain the published implementation and independent oracles. CPU acceptance tests for these released paths [passed publicly](https://github.com/yza-thu-eiri/msa-systems-lab/actions/runs/40891800371).
+- **Correctness-first code:** [Causal support contract](docs/reference/causal-support.md) and [forward parity](docs/reference/forward-parity.md) explain the published implementation and independent oracles. The published suite [passed 43 tests on public CPU CI](https://github.com/yza-thu-eiri/msa-systems-lab/actions/runs/40892058862).
 - **Run the released tests:** Use Python 3.12, install with `python -m pip install -e ".[test]"`, then `python -m pytest tests/`. For CPU-only PyTorch, see the [CI installation workflow](.github/workflows/reference-tests.yml).
 - **Further reproducibility:** Manual backward, benchmark harnesses, training scripts, and selected raw artifacts remain separate review/release tasks. Their claims retain the recorded-internal-evidence label.
 
