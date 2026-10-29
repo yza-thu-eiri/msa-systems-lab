@@ -6,7 +6,7 @@
 
 A correctness-first engineering investigation of **block-sparse attention**, **learned routing**, and the gap between **reduced mathematical work** and **faster hardware execution**.
 
-> **Release status:** The first two technical case studies and the P1 causal-support source/tests are public. Other source, configs, and raw experimental evidence are being selected for incremental release. The recorded internal results below are **not yet independently reproducible from this public repository**.
+> **Release status:** The first two technical case studies and the P1 forward-correctness reference sources/tests are public. The public CPU acceptance suite has passed. Historical GPU performance measurements and P2 training results are **not yet independently reproducible from this repository**; the underlying benchmark/training artifacts are being curated for later release.
 >
 > **Scope:** Independent reproduction and systems analysis—not an official MiniMax implementation, a production attention library, or a claim of a new attention algorithm.
 
@@ -66,7 +66,8 @@ A small-model block router reached a persistent Routing-KL plateau near **0.205*
 | System component | Evidence maturity | Public artifact |
 | --- | --- | --- |
 | Causal support contract | Phase 1 internally verified; [public CPU acceptance check passed](https://github.com/yza-thu-eiri/msa-systems-lab/actions/runs/40890498194) | [Source](src/msa_lab/contracts/support.py) · [Tests](tests/test_support.py) · [Contract](docs/reference/causal-support.md) |
-| Sparse forward and manual fixed-selection backward | Phase 1 internally verified | Case Study 01; source and focused tests pending |
+| Masked-dense / gathered sparse forward | Phase 1 internally verified; [public CPU tests passed](https://github.com/yza-thu-eiri/msa-systems-lab/actions/runs/40891800371) | [Forward parity](docs/reference/forward-parity.md) · [Oracle](src/msa_lab/reference/masked_dense.py) · [Gathered](src/msa_lab/reference/gathered_sparse.py) · [Tests](tests/) |
+| Manual fixed-selection backward | Phase 1 internally verified | Source and gradient parity tests pending |
 | Learned routing, mode switching, exact resume, one-/two-layer diagnosis | Phase 2 internally verified; 77 regression tests recorded | Case Study 02; source/configs pending |
 | GPU-friendly Triton/kernel execution and speedup | **Not established** | Future work |
 | Irregular metadata, backward scheduling, inference runtime | **Not established** | Future work |
@@ -75,8 +76,9 @@ A small-model block router reached a persistent Routing-KL plateau near **0.205*
 
 - **Fast technical review:** Start with [Case Study 01](docs/case-studies/01-fewer-flops-slower-execution.md) and [Case Study 02](docs/case-studies/02-routing-error-and-task-impact.md).
 - **Evidence discipline and release queue:** [Publication and evidence standards](docs/PUBLICATION.md).
-- **First released code:** [Causal support semantics](docs/reference/causal-support.md) includes [source](src/msa_lab/contracts/support.py), [acceptance tests](tests/test_support.py), and a [CPU CI workflow](.github/workflows/reference-tests.yml). Run `python -m pip install -e ".[test]"` followed by `python -m pytest -q tests/test_support.py`. [First public CPU test run passed](https://github.com/yza-thu-eiri/msa-systems-lab/actions/runs/40890498194); this does not validate the unreleased forward/backward paths.
-- **Further reproducibility:** The other references, tests, benchmark harnesses, and selected raw artifacts will appear as independently reviewed commits. Until then, their findings remain labeled as internal observations.
+- **Correctness-first code:** [Causal support contract](docs/reference/causal-support.md) and [forward parity](docs/reference/forward-parity.md) explain the published implementation and independent oracles. CPU acceptance tests for these released paths [passed publicly](https://github.com/yza-thu-eiri/msa-systems-lab/actions/runs/40891800371).
+- **Run the released tests:** Use Python 3.12, install with `python -m pip install -e ".[test]"`, then `python -m pytest tests/`. For CPU-only PyTorch, see the [CI installation workflow](.github/workflows/reference-tests.yml).
+- **Further reproducibility:** Manual backward, benchmark harnesses, training scripts, and selected raw artifacts remain separate review/release tasks. Their claims retain the recorded-internal-evidence label.
 
 ## Next frontier: turning sparsity into GPU work
 
