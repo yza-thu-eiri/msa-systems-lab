@@ -6,7 +6,7 @@
 
 A correctness-first engineering investigation of **block-sparse attention**, **learned routing**, and the gap between **reduced mathematical work** and **faster hardware execution**.
 
-> **Release status:** The first two technical case studies and the P1 forward/backward correctness references and tests are public. The public CPU acceptance suite now passes **53 tests**, including benchmark-harness helper checks. The P1 benchmark harness and selected historical GPU evidence are now public; those historical measurements have not yet been independently re-run from this release. P2 training artifacts remain pending.
+> **Release status:** The first two technical case studies and the P1 forward/backward correctness references and tests are public. The public CPU acceptance suite now passes **98 tests**, including benchmark-harness helper checks. The P1 benchmark harness and selected historical GPU evidence are now public; those historical measurements have not yet been independently re-run from this release. P2 training artifacts remain pending.
 >
 > **Scope:** Independent reproduction and systems analysis—not an official MiniMax implementation, a production attention library, or a claim of a new attention algorithm.
 
