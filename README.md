@@ -6,7 +6,7 @@
 
 A correctness-first engineering investigation of **block-sparse attention**, **learned routing**, and the gap between **reduced mathematical work** and **faster hardware execution**.
 
-> **Release status:** The first two technical case studies and the P1 forward/backward correctness references and tests are public. The public CPU acceptance suite now passes **100 tests**, including benchmark-harness helper checks. The P1 benchmark harness and selected historical GPU evidence are now public; those historical measurements have not yet been independently re-run from this release. P2 training artifacts remain pending.
+> **Release status:** The P1 correctness references and GPU profiling harness, P2 routing references, and the bounded P2 TinyLM training/resume implementation are public. The [public CPU workflow passed 164 tests plus train/eval/generate commands](https://github.com/yza-thu-eiri/msa-systems-lab/actions/runs/40988032322). Historical A4000 timings and P2 Router/task experiment measurements have **not** been independently re-run from this release; their raw experimental artifacts remain a separate publication task.
 >
 > **Scope:** Independent reproduction and systems analysis—not an official MiniMax implementation, a production attention library, or a claim of a new attention algorithm.
 
@@ -73,24 +73,25 @@ A small-model block router reached a persistent Routing-KL plateau near **0.205*
 | P1 CUDA benchmark harness | Publicly inspectable; CPU helper tests included in the [53-test CI run](https://github.com/yza-thu-eiri/msa-systems-lab/actions/runs/40898609639) | [Harness](benchmarks/reference/benchmark_forward.py) · [Run guide](benchmarks/README.md) · [Historical evidence](evidence/p1_c05_gpu_facts.md) |
 | P2 Index / BlockMax / canonical top-k | Public CPU tests passed | [Routing guide](docs/routing.md) · [Index](src/msa_lab/reference/index_blockmax.py) · [Selection](src/msa_lab/reference/selection.py) |
 | P2 Routing-KL, gradient ownership, FULL/SPARSE Main | [100 public tests passed](https://github.com/yza-thu-eiri/msa-systems-lab/actions/runs/40902856254) | [MSA layer](src/msa_lab/model/msa_attention.py) · [Routing-KL](src/msa_lab/reference/routing_kl.py) · [Example](examples/routing_walkthrough.py) |
-| P2 training, exact resume, one-/two-layer experiments | Internally verified; 77 regression tests recorded | Case Study 02; training source and raw evidence pending |
+| P2 TinyLM train/eval/generate and exact resume | [164 public tests and CLI smoke passed](https://github.com/yza-thu-eiri/msa-systems-lab/actions/runs/40988032322) | [Training guide](docs/training.md) · [Engine](src/msa_lab/training/engine.py) · [CPU config](configs/p2_cpu_smoke.json) · [Resume test](tests/test_public_p2_training_resume.py) |
+| P2 Router-to-task and two-layer historical experiments | Internally verified; raw training evidence not yet public | [Case Study 02](docs/case-studies/02-routing-error-and-task-impact.md); historical metrics are not claimed as public reproductions |
 | GPU-friendly Triton/kernel execution and speedup | **Not established** | Future work |
 | Irregular metadata, backward scheduling, inference runtime | **Not established** | Future work |
 
-## Runnable CPU correctness demos
+## Runnable CPU correctness and training demos
 
 - [P1 fixed-support walkthrough](examples/fixed_support_walkthrough.py): output/LSE parity and manual gradients.
 - [P2 routing walkthrough](examples/routing_walkthrough.py): dynamic Index BlockMax, selected block IDs, effective support and Routing-KL.
 
-Both run on CPU and demonstrate semantic correctness rather than GPU throughput.
+Both run on CPU and demonstrate semantic correctness rather than GPU throughput. The [TinyLM CPU training smoke](docs/training.md) additionally exercises a bounded FULL→SPARSE run, checkpoint, evaluation and generation.
 
 ## How to navigate
 
 - **Fast technical review:** Start with [Case Study 01](docs/case-studies/01-fewer-flops-slower-execution.md) and [Case Study 02](docs/case-studies/02-routing-error-and-task-impact.md).
 - **Evidence discipline and release queue:** [Publication and evidence standards](docs/PUBLICATION.md).
-- **Correctness-first code:** Read the [causal-support contract](docs/reference/causal-support.md), [same-support forward parity](docs/reference/forward-parity.md), and [manual backward derivation](docs/reference/manual-backward.md). The full public P1/P2 CPU suite [passed 100 tests](https://github.com/yza-thu-eiri/msa-systems-lab/actions/runs/40902856254), including a finite-difference gradient check and benchmark-harness helper checks.
+- **Correctness-first code:** Read the [causal-support contract](docs/reference/causal-support.md), [same-support forward parity](docs/reference/forward-parity.md), and [manual backward derivation](docs/reference/manual-backward.md). The public P1/P2 CPU suite [passed 164 tests](https://github.com/yza-thu-eiri/msa-systems-lab/actions/runs/40988032322), including fixed-support finite differences, P2 optimizer ownership, TinyLM training, exact resume and benchmark-harness helper checks.
 - **Run the released tests:** Use Python 3.12, install with `python -m pip install -e ".[test]"`, then `python -m pytest tests/`. For CPU-only PyTorch, see the [CI installation workflow](.github/workflows/reference-tests.yml).
-- **Further reproducibility:** GPU benchmark harnesses, P2 training scripts and selected raw experimental artifacts remain separate review/release tasks. Their claims retain the recorded-internal-evidence label.
+- **Further reproducibility:** Historical A4000 GPU measurements and P2 Router/task experiment checkpoints, analysis scripts and raw audit records remain separate review/release tasks. Public synthetic CPU training tests do not reproduce those results.
 
 ## Next frontier: turning sparsity into GPU work
 
