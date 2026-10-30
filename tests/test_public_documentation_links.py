@@ -6,7 +6,7 @@ from urllib.parse import unquote
 
 
 ROOT = Path(__file__).resolve().parents[1]
-MARKDOWN_LINK = re.compile(r"!?(?:\\[[^\\]]*\\])\\(([^)]+)\\)")
+MARKDOWN_LINK = re.compile(r"!?\[[^\]]*\]\(([^)]+)\)")
 
 
 def test_public_readme_and_study_links_resolve():
@@ -23,3 +23,11 @@ def test_public_readme_and_study_links_resolve():
             if not destination.is_relative_to(ROOT.resolve()) or not destination.exists():
                 broken.append(f"{page.relative_to(ROOT)} -> {raw}")
     assert not broken, "Broken or escaping Markdown links:\\n" + "\\n".join(broken)
+
+
+def test_markdown_link_pattern_finds_regular_and_image_links():
+    sample = "[guide](docs/training.md) ![chart](docs/assets/router/06_layer1_token_effect_chain.png)"
+    assert MARKDOWN_LINK.findall(sample) == [
+        "docs/training.md",
+        "docs/assets/router/06_layer1_token_effect_chain.png",
+    ]
