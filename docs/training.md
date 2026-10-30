@@ -37,10 +37,10 @@ python -m msa_lab.training.eval_cli \
 python -m msa_lab.training.generate_cli \
   --config configs/p2_cpu_smoke.json \
   --checkpoint artifacts/p2-cpu-smoke/checkpoint_final.pt \
-  --prompt 0 --max-new-tokens 2
+  --prompt 0,1,2,3 --max-new-tokens 2
 ```
 
-[Config](../configs/p2_cpu_smoke.json) uses B=1, N=4, two Transformer layers, one MSA layer, GQA 4:2, `warmup_steps=1`, three training steps, a small synthetic increment task and no external dataset download. These are **wiring checks**, not meaningful language-model performance experiments.
+[Config](../configs/p2_cpu_smoke.json) uses B=1, N=4, two Transformer layers, one MSA layer, GQA 4:2, `warmup_steps=1`, three training steps, a small synthetic increment task and no external dataset download. These are **wiring checks**, not meaningful language-model performance experiments. For this config, `top_k=2` and `block_size=2` require a starting prefix covering **at least two key blocks**; a one-token prompt fails the selection contract. The CLI example uses four prompt tokens and generates two more.
 
 The run writes `config.json`, `run_manifest.json`, `metrics.jsonl`, and a final `checkpoint_final.pt` under the configured `artifacts/` directory (gitignored). Metrics include layer-level execution mode, Router KL, optimizer/Index gradient norms, step time and token counts. No checkpoint/model weight is bundled in this repository.
 
