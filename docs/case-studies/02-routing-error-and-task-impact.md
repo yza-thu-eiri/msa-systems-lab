@@ -30,6 +30,10 @@ These measurements answer different questions:
 
 ## 2. The KL plateau was investigated rather than assumed
 
+![Historical joint-training divergence: LM improves while held-out Router KL rises](../assets/router/01_joint_training_divergence.png)
+
+*Historical C06 figure 01. The left plot tracks held-out language-model loss; the right tracks held-out Routing-KL. The underlying training logs have not been republished or rerun here.*
+
 The routing objective in a controlled fixed-32-target experiment stabilized near **0.205**, without going to zero. Investigations separated several possible explanations:
 
 | Controlled check | Recorded observation | Interpretation |
@@ -38,6 +42,10 @@ The routing objective in a controlled fixed-32-target experiment stabilized near
 | Freeze Main as teacher | Held-out KL still plateaued | A moving teacher was not the sole explanation |
 | Repeated fixed batch | Training KL moved and train/held-out diverged | The router had some local fitting capacity |
 | Change learning rate, batch, initialization, and fixed-weight FP32 Index replay | No decisive disappearance of the full-pool plateau | Not explained by a simple single-setting fix |
+
+![Historical fixed-batch function audit after the KL plateau](../assets/router/05_fixed_batch_function_audit.png)
+
+*Historical C06 figure 05. Parameter/operator changes continue even while the aggregate fixed-batch function barely changes; improvements and degradations across rows can cancel. This is diagnostic evidence, not a unique proof of Index-dimension capacity limits.*
 
 The resulting **hypothesis** is a constraint of the shared low-dimensional mapping / teacher / objective combination. **It has not been shown** that Index dimension 16 alone causes the limit. The KL plateau and the downstream population audit are related but distinct experimental contexts and should not be treated as a single experiment.
 
@@ -53,6 +61,10 @@ One held-out audit of **83,616 sparse-active prediction positions** reported:
 | Net accuracy gap | **−0.579 percentage points** |
 | Changed top-1 prediction identity | **3,951 / 83,616 = 4.73%** |
 
+![Historical layer-1 token effects from attention to prediction](../assets/router/06_layer1_token_effect_chain.png)
+
+*Historical C06 figure 06. Internal relative RMS, token NTP deltas and correctness are different measurements; the chart is not a new public model replay.*
+
 The 3,951 changed predictions comprise three different outcomes:
 
 | FULL → SPARSE | Positions |
@@ -60,6 +72,10 @@ The 3,951 changed predictions comprise three different outcomes:
 | Correct → wrong | 1,175 |
 | Wrong → correct | 691 |
 | One wrong token → another wrong token | 2,085 |
+
+![Historical token cohorts and NTP gap decomposition](../assets/router/07_layer1_token_cohorts.png)
+
+*Historical C06 figure 07. Token cohorts separate continuous probability effects from correct→wrong and wrong→correct prediction transitions; values originate in the same unpublished paired audit.*
 
 That leaves a net loss of 484 correct predictions. Thus, **4.73% of predictions changed** while net accuracy moved by only **0.579 percentage points**.
 
@@ -106,6 +122,8 @@ A separate **7-checkpoint × 4-held-out-batch** frozen population audit found on
 **Not established:** a unique explanation for KL saturation, universal relationships among KL/coverage/task loss, stable deep or long-context routing, a competitive sparse GPU kernel, or a production speedup.
 
 ## 7. Public analysis tools and provenance
+
+The four historical charts above were transferred as byte-identical image blobs from the private P2 review (original chart filenames 01/05/06/07). They carry **historical-source** status, not independent verification; see the image-source index in the [P2 evidence guide](../p2-experiment-evidence.md).
 
 The public [historical summary ledger](../../evidence/p2_historical_summary.json) records the distinct experimental contexts, exact reported values, source-document Git blob identities, and SHA-256 identifiers for selected **local** artifacts. It is a curated *transcription* from the closed private Phase 2 review, not raw model output.
 
