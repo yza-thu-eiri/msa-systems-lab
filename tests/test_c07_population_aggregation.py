@@ -79,6 +79,7 @@ def test_c07_cli_aggregates_reader_supplied_records(tmp_path):
     )
     summary = json.loads(run.stdout)
     assert summary == json.loads(output.read_text(encoding="utf-8"))
+    assert summary["precision"] == "unspecified"
     report = summary["checkpoints"]["checkpoint_0"]
     assert report["batches"] == 2
     assert report["sequences"] == 4
