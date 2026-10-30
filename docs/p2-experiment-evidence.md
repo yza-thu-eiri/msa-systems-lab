@@ -41,6 +41,7 @@ This is the adapted, published C07 work model. It uses only model geometry, with
 ```bash
 python scripts/aggregate_c07_interaction_audits.py \
   --audit-root /path/to/c07_population_interaction \
+  --precision CUDA-BF16 \
   --output artifacts/c07_population_summary.json
 ```
 
