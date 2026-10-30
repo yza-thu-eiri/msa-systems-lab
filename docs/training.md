@@ -63,7 +63,7 @@ Checkpoint contents include model, optimizer, scheduler, optional scaler, traine
 | Runnable training and evidence logging | [Engine](../src/msa_lab/training/engine.py), [CPU config](../configs/p2_cpu_smoke.json), [CI workflow](../.github/workflows/reference-tests.yml) |
 | Tiny Shakespeare corpus identity | [SHA-256 pinned loader](../src/msa_lab/data/tiny_shakespeare.py); source text is not mirrored here |
 
-For a public acceptance run, execute `python -m pytest tests/` or inspect the [GitHub Actions workflow](../.github/workflows/reference-tests.yml). A passing CPU run supports the tested semantics and small-model closure only. It does **not** certify high-throughput training, GPU kernel acceleration, multiple-node distributed execution, long-context routing behavior or the previously reported held-out task statistics.
+For a public acceptance run, execute `python -m pytest tests/` or inspect the [GitHub Actions workflow](../.github/workflows/reference-tests.yml). The [completed public CPU run](https://github.com/yza-thu-eiri/msa-systems-lab/actions/runs/40988032322) reports **164 passing tests** and successful train, eval and generate CLI steps. A passing CPU run supports the tested semantics and small-model closure only. It does **not** certify high-throughput training, GPU kernel acceleration, multiple-node distributed execution, long-context routing behavior or the previously reported held-out task statistics.
 
 ## Next experimental evidence
 
