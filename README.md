@@ -96,7 +96,7 @@ In a historical 7-checkpoint × 4-batch two-layer audit, upstream switching alte
 - [P2 routing walkthrough](examples/routing_walkthrough.py): dynamic Index BlockMax, selected block IDs, effective support and Routing-KL.
 - [C07 four-state walkthrough](examples/c07_four_state_walkthrough.py): synthetic same-weight FF/SF/FS/SS TinyLM execution.
 
-Both run on CPU and demonstrate semantic correctness rather than GPU throughput. The [TinyLM CPU training smoke](docs/training.md) additionally exercises a bounded FULL→SPARSE run, checkpoint, evaluation and generation.
+All three examples run on CPU and demonstrate the execution contracts rather than GPU throughput. The [TinyLM CPU training smoke](docs/training.md) additionally exercises a bounded FULL→SPARSE run, checkpoint, evaluation and generation. Historical analysis tooling and its exact provenance limits are described in the [P2 evidence guide](docs/p2-experiment-evidence.md).
 
 ## How to navigate
 
