@@ -47,16 +47,17 @@ A transparent correctness reference is expected to be readable, not fast. Any op
 | Component | Public status |
 | --- | --- |
 | Project overview | Published |
-| P1 sparse reference execution case study | Published; reference forward/backward sources public, historical GPU benchmark artifacts pending |
+| P1 sparse reference execution case study | Published with [benchmark harness](../benchmarks/reference/benchmark_forward.py), [A4000 historical timing CSV](../evidence/p1_c05_a4000.csv), and [Profiler tables](../evidence/profiler_tables/minimal_self_time_tables.txt); independent GPU rerun pending |
 | P2 routing-to-task case study | Published; underlying source/evidence pending |
 | Fixed-support causal contract | [Source](../src/msa_lab/contracts/support.py) and [tests](../tests/test_support.py) published; [public CPU acceptance run passed](https://github.com/yza-thu-eiri/msa-systems-lab/actions/runs/40890498194) |
 | Masked-dense and gathered forward references | [Oracle](../src/msa_lab/reference/masked_dense.py), [gathered](../src/msa_lab/reference/gathered_sparse.py), [forward parity guide](reference/forward-parity.md), and [public passing CPU tests](https://github.com/yza-thu-eiri/msa-systems-lab/actions/runs/40891800371) |
 | Output/LSE and fixed-selection backward parity tests | [Frozen source](../src/msa_lab/reference/gathered_sparse_backward.py), [7 original gradient acceptance cases](../tests/test_gathered_sparse_backward.py), [independent finite differences](../tests/test_backward_finite_difference.py) published; [51 public tests passed](https://github.com/yza-thu-eiri/msa-systems-lab/actions/runs/40892923837) |
 | P1 benchmark harness, logs, profiler extracts | Published; see benchmark README and P1 evidence files |
 | P2 routing and Main reference | Published with CPU tests; see routing guide |
-| P2 training and intervention scripts/configs | Pending |
+| P2 TinyLM training engine, eval/generate, synthetic CPU config and exact resume | [Training source and guide](training.md), [smoke config](../configs/p2_cpu_smoke.json), [public end-to-end resume test](../tests/test_public_p2_training_resume.py); [164 tests + CLI smoke passed](https://github.com/yza-thu-eiri/msa-systems-lab/actions/runs/40988032322) |
+| P2 historical Router/task intervention configs, checkpoints, audits | Pending independent reproduction/provenance review |
 | GPU kernel implementation and speedup measurements | Not yet established |
 
-The frozen support, forward, and manual fixed-selection backward references are public, with [support](reference/causal-support.md), [forward parity](reference/forward-parity.md), and [manual backward](reference/manual-backward.md) explanations. The latest [51-test CPU suite](https://github.com/yza-thu-eiri/msa-systems-lab/actions/runs/40892923837) passed, including one independent finite-difference gradient check. This **does not** validate historical GPU benchmark results, low-precision production operation, dynamic router gradients, or Phase 2 training experiments.
+The frozen support, forward, and manual fixed-selection backward references are public, with [support](reference/causal-support.md), [forward parity](reference/forward-parity.md), and [manual backward](reference/manual-backward.md) explanations. The latest [164-test CPU suite and train/eval/generate smoke](https://github.com/yza-thu-eiri/msa-systems-lab/actions/runs/40988032322) passed, including finite-difference gradients, P2 training and resume checks. This **does not** validate historical GPU benchmark results, low-precision production operation, long-context or distributed execution, nor the original P2 held-out training experiments.
 
 The README and individual case studies should be updated each time their reproducibility level changes. No performance or training result is promoted to a stronger claim level simply because the prose was published.
