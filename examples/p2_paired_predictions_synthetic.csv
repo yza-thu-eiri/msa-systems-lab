@@ -1,0 +1,6 @@
+full_prediction,sparse_prediction,target_token
+A,B,A
+B,A,A
+B,C,A
+A,A,A
+B,B,A
