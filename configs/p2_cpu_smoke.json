@@ -1,0 +1,33 @@
+{
+  "model": {
+    "vocab_size": 16,
+    "max_seq_len": 8,
+    "d_model": 16,
+    "n_layers": 2,
+    "n_q_heads": 4,
+    "n_kv_heads": 2,
+    "d_ff": 32,
+    "dropout": 0,
+    "msa_layer_id": 1,
+    "msa_index_dim": 4,
+    "msa_block_size": 2,
+    "msa_top_k": 2
+  },
+  "train": {
+    "seed": 17,
+    "device": "cpu",
+    "dtype": "float32",
+    "batch_size": 1,
+    "seq_len": 4,
+    "steps": 3,
+    "main_mode_policy": "scheduled",
+    "warmup_steps": 1,
+    "learning_rate": 0.001,
+    "routing_kl_weight": 0.1,
+    "checkpoint_every": 2,
+    "log_every": 1,
+    "eval_every": 0,
+    "tensorboard": false,
+    "run_dir": "artifacts/p2-cpu-smoke"
+  }
+}
