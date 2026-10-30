@@ -1,119 +1,96 @@
 # MSA Systems Lab
 
-**From sparse-attention semantics to GPU execution.**
+**Correctness-first sparse attention: from semantic oracles and learned routing to GPU execution.**
 
-[![Reference checks](https://github.com/yza-thu-eiri/msa-systems-lab/actions/workflows/reference-tests.yml/badge.svg)](https://github.com/yza-thu-eiri/msa-systems-lab/actions/workflows/reference-tests.yml)
+[![Public CPU reference checks](https://github.com/yza-thu-eiri/msa-systems-lab/actions/workflows/reference-tests.yml/badge.svg)](https://github.com/yza-thu-eiri/msa-systems-lab/actions/workflows/reference-tests.yml)
+[![MIT License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 
-A correctness-first engineering investigation of **block-sparse attention**, **learned routing**, and the gap between **reduced mathematical work** and **faster hardware execution**.
+This is an **independent engineering investigation**, not an official MiniMax implementation or a production kernel library. It asks three questions:
 
-> **Release status:** The P1 correctness/GPU profiling reference, P2 routing and TinyLM training system, and **four curated engineering cases** are public. The [public CPU workflow passed 174 tests, analysis tools and train/eval/generate commands](https://github.com/yza-thu-eiri/msa-systems-lab/actions/runs/40989283570). Historical A4000 and C06/C07 experiment results remain **recorded internal observations**: the original checkpoints and replay logs have not been independently rerun from this release.
->
-> **Scope:** Independent reproduction and systems analysis—not an official MiniMax implementation, a production attention library, or a claim of a new attention algorithm.
+1. **Correctness:** Does gathered block-sparse attention match a masked-dense oracle over exactly the same causal support, including gradients?
+2. **Learning:** What do routing mistakes actually change in task loss, token correctness, and the dynamics of FULL→SPARSE training?
+3. **Execution:** Why can fewer QK/PV operations still produce slower GPU execution, and what must change in a future kernel?
 
-## Three questions
+**Current boundary:** P1 reference forward/backward, P2 learned Router and TinyLM training, exact resume, and CPU acceptance checks are public. P3 optimized GPU kernels and distributed execution are **not yet established**. Historical A4000/C06/C07 experiment numbers remain explicitly labeled as recorded internal measurements when original raw inputs are not public.
 
-1. **Semantics** — Are masked-dense and gathered sparse attention computing the same function over the same causal support?
-2. **Training** — What does imperfect learned block routing actually change in downstream model behavior?
-3. **Execution** — When does mathematical sparsity translate into faster GPU work?
+## Four engineering findings
+
+| Investigation | Technical finding | Evidence and limits |
+| --- | --- | --- |
+| **[01 · Fewer FLOPs, slower execution](docs/case-studies/01-fewer-flops-slower-execution.md)** | At a small A4000 FP32 shape, gathered sparse needed **2.65× less** Main attention arithmetic but ran **1.81× slower** than masked-dense. | [CUDA Events + Profiler](benchmarks/README.md); only two latency samples, not independently GPU-rerun |
+| **[02 · Routing error vs task failure](docs/case-studies/02-routing-error-and-task-impact.md)** | In an 83,616-position paired audit, selected support retained **95.7631%** teacher mass; **4.73%** of top-1 tokens changed even though net accuracy fell **0.579 pp**. | [Historical plots and evidence ledger](docs/p2-experiment-evidence.md); original checkpoint/token CSV not public |
+| **[03 · Adapting to sparse execution](docs/case-studies/03-adapting-to-sparse-execution.md)** | A same-state 100-step training fork reported a **66.46% smaller** FULL/SPARSE execution gap in SPARSE-trained weights. | One historical tiny-model seed; bounded public CPU mode-switch/resume test is separate |
+| **[04 · Multi-layer propagation](docs/case-studies/04-do-sparse-errors-cascade-across-layers.md)** | In a two-layer held-out audit, upstream changes crossed only **0.228–0.488%** of downstream support rows; staged switching bought little quality for extra logical work. | Frozen 7-checkpoint × 4-batch population; [work-proxy ratios independently recomputable](scripts/analyze_c07_work_crossover.py), not GPU speedups |
+
+> **Read the figures, not just the headline metrics.** [Case Study 02](docs/case-studies/02-routing-error-and-task-impact.md) now includes four original historical diagnostic charts: joint LM/KL divergence, fixed-batch function audit, attention-to-token effects and token correctness cohorts. Their byte-identical source hashes and limitations are indexed [here](docs/p2-experiment-evidence.md).
+
+## Architecture and correctness boundary
 
 ```mermaid
 flowchart LR
-    A[Block selection] --> B[Effective causal support]
-    B --> C[Masked-dense oracle]
-    B --> D[Gathered sparse reference]
-    C <-->|Output / LSE parity| D
-    D --> E[Fixed-selection backward]
-    B --> F[Learned routing and FULL/SPARSE training]
-    E --> G[GPU kernel parity and optimization]
-    F --> G
+    Q[Q / K / V] --> I[Index Q/K]
+    I --> BM[Causal BlockMax]
+    BM --> T[Top-k block selection]
+    T --> S[Effective causal token support]
+    S --> MD[Masked-dense oracle]
+    S --> GS[Gathered sparse reference]
+    MD <-->|O / LSE parity| GS
+    GS --> BW[Fixed-support backward: dQ dK dV]
+    Q --> TM[TinyLM: FULL or SPARSE Main]
+    S --> TM
+    TM --> KL[Routing-KL + Index gradients]
+    TM --> TR[Training / optimizer / exact resume]
+    GS --> GPU[GPU profiling and future kernel parity]
 ```
 
-The central design decision is to keep **readable correctness oracles** separate from future high-performance execution paths.
+- **Semantic verification:** causal support contract; masked-dense vs gathered forward/O-LSE checks; manual dQ/dK/dV with autograd and finite-difference oracles.
+- **Training verification:** Index gradient ownership, FULL/SPARSE per-layer execution, shared Dense anchor, optimizer and RNG state, interrupted/resumed training equivalence.
+- **Performance investigation:** CUDA Event and PyTorch Profiler are distinct measurements; the present gathered reference is deliberately readable, **not** kernel optimized.
 
-## Selected engineering findings
+## Run the public checks
 
-### 01 · Fewer FLOPs, slower execution
+Use **Python 3.12**. On CPU, install the matching PyTorch wheel first:
 
-A transparent gathered reference reduced main QK/PV arithmetic by **2.65×** versus a masked-dense oracle in a small RTX A4000 / FP32 test, but its complete forward callable was **1.81× slower** in a two-sample diagnostic run. Host-driven irregular work, synchronization, and thousands of tiny kernels explain the mismatch.
+```bash
+python -m pip install torch==2.11.0 --index-url https://download.pytorch.org/whl/cpu
+python -m pip install -e ".[test]"
+python -m pytest tests/ -ra
 
-| Ksel=2 (B=1, N=128, Hq=8, Hkv=2, D=64) | Masked-dense | Gathered sparse |
-| --- | ---: | ---: |
-| QK/PV FLOPs | 33,554,432 | 12,648,448 |
-| CUDA Event median (ms) | 126.732 | 229.488 |
-| Profiler GPU kernel events | 2,598 | 7,189 |
+python examples/fixed_support_walkthrough.py
+python examples/routing_walkthrough.py
+python examples/c07_four_state_walkthrough.py
+```
 
-**[Read Case Study 01 — Fewer FLOPs, Slower Sparse Attention](docs/case-studies/01-fewer-flops-slower-execution.md)**
+The public [GitHub Actions workflow](.github/workflows/reference-tests.yml) also trains, evaluates and generates from a bounded synthetic TinyLM checkpoint. To run it locally:
 
-Benchmark artifacts: [CUDA harness](benchmarks/reference/benchmark_forward.py) · [reproduction guide](benchmarks/README.md) · [A4000 timing CSV](evidence/p1_c05_a4000.csv) · [raw Profiler tables](evidence/profiler_tables/minimal_self_time_tables.txt).
+```bash
+python -m msa_lab.training.cli --config configs/p2_cpu_smoke.json
+python -m msa_lab.training.eval_cli --config configs/p2_cpu_smoke.json --checkpoint artifacts/p2-cpu-smoke/checkpoint_final.pt
+python -m msa_lab.training.generate_cli --config configs/p2_cpu_smoke.json --checkpoint artifacts/p2-cpu-smoke/checkpoint_final.pt --prompt 0,1,2,3 --max-new-tokens 2
+```
 
-*Measurement boundary: complete PyTorch/Python forward callables including validation and support construction, after two warmups and with only two timing samples. These are not statistically stable performance estimates, and do not measure an optimized sparse GPU kernel.*
+The CPU-only suite skips the separately published CUDA exact-resume regression when no GPU is available. A skipped CUDA test is **not** evidence that it passed on GPU. The synthetic training smoke proves wiring and state handling only; it does not recreate historical held-out model outcomes.
 
-### 02 · Routing error is not task failure
+## Choose the right evidence level
 
-A small-model block router reached a persistent Routing-KL plateau near **0.205** in a related training investigation. A separate paired FULL/SPARSE replay showed that routing retained most teacher attention mass, with a modest average task accuracy gap—but **thousands of real prediction changes**.
+| Claim or artifact | Reproducibility in this checkout |
+| --- | --- |
+| Support, attention parity, Routing-KL ownership, training and exact resume | **Public CPU test + runnable demo**; [test suite](tests/) and CI |
+| C07 logical forward-work ratios by sequence length | **Public recomputation** using [geometry-only config](configs/c07_work_proxy.json); *not* measured latency |
+| P1 A4000 CUDA timing/profiler | **Historical run + published harness/selected records**; rerun needed for a new GPU claim |
+| C06/C07 Router/task, adaptation and propagation percentages | **Historical internal observation**, original checkpoints/batch audits and exact dirty-source snapshot not released |
+| Production sparse CUDA/Triton speedup, deeper/longer or multi-GPU behavior | **Not established** |
 
-| Held-out sparse-active positions | Recorded result |
-| --- | ---: |
-| Prediction positions audited | 83,616 |
-| Teacher attention mass retained | 95.7631% |
-| FULL / SPARSE top-1 accuracy | 54.988% / 54.409% |
-| Top-1 prediction identity changed | 4.73% |
+Source and artifact provenance: [Publication standards](docs/PUBLICATION.md) · [P2 evidence and analysis tools](docs/p2-experiment-evidence.md).
 
-**[Read Case Study 02 — Routing Error Is Not the Same as Task Failure](docs/case-studies/02-routing-error-and-task-impact.md)**
+## Navigation
 
-*The KL plateau and paired functional audit are related but distinct experiment contexts. Conclusions are limited to controlled small-model observations, not deep-model or long-context guarantees.*
+- [Causal support](docs/reference/causal-support.md) · [Forward parity](docs/reference/forward-parity.md) · [Manual backward derivation](docs/reference/manual-backward.md)
+- [P2 routing semantics](docs/routing.md) · [TinyLM training / exact resume guide](docs/training.md)
+- [P1 GPU benchmark reproduction](benchmarks/README.md) · [P2 paired prediction auditor](scripts/audit_paired_predictions.py) · [C07 four-state population aggregation](scripts/aggregate_c07_interaction_audits.py)
 
-### 03 · Sparse execution can be learned around
-
-A common-state 100-step FULL/SPARSE continuation produced a **66.46% smaller same-weight execution gap** on the SPARSE-trained branch than the FULL control branch. This was one internal tiny-model seed, not a public replay or a general convergence law.
-
-**[Read Case Study 03 — Adapting to Sparse Execution](docs/case-studies/03-adapting-to-sparse-execution.md)**
-
-### 04 · Does routing error cascade across layers?
-
-In a historical 7-checkpoint × 4-batch two-layer audit, upstream switching altered only **0.228%–0.488%** of downstream support rows. At matched horizons, staged switching added **9.3% or 46.7%** logical Main attention pairs for tiny held-out NTP differences. Those are descriptive BF16 population / FP32 schedule results from different experiments, **not GPU runtime wins**.
-
-**[Read Case Study 04 — Do Sparse Errors Cascade Across Layers?](docs/case-studies/04-do-sparse-errors-cascade-across-layers.md)**
-
-## What is established—and what is not
-
-| System component | Evidence maturity | Public artifact |
-| --- | --- | --- |
-| Causal support contract | Phase 1 internally verified; [public CPU acceptance check passed](https://github.com/yza-thu-eiri/msa-systems-lab/actions/runs/40890498194) | [Source](src/msa_lab/contracts/support.py) · [Tests](tests/test_support.py) · [Contract](docs/reference/causal-support.md) |
-| Masked-dense / gathered sparse forward | Phase 1 internally verified; [43 public CPU tests passed](https://github.com/yza-thu-eiri/msa-systems-lab/actions/runs/40892058862) (support + both forward paths) | [Forward parity](docs/reference/forward-parity.md) · [Oracle](src/msa_lab/reference/masked_dense.py) · [Gathered](src/msa_lab/reference/gathered_sparse.py) · [Tests](tests/) |
-| Manual fixed-selection backward | Frozen P1 reference; [51-test public suite passed](https://github.com/yza-thu-eiri/msa-systems-lab/actions/runs/40892923837) | [Gradient derivation](docs/reference/manual-backward.md) · [Source](src/msa_lab/reference/gathered_sparse_backward.py) · [Autograd tests](tests/test_gathered_sparse_backward.py) · [Finite differences](tests/test_backward_finite_difference.py) |
-| P1 CUDA benchmark harness | Publicly inspectable; CPU helper tests included in the [53-test CI run](https://github.com/yza-thu-eiri/msa-systems-lab/actions/runs/40898609639) | [Harness](benchmarks/reference/benchmark_forward.py) · [Run guide](benchmarks/README.md) · [Historical evidence](evidence/p1_c05_gpu_facts.md) |
-| P2 Index / BlockMax / canonical top-k | Public CPU tests passed | [Routing guide](docs/routing.md) · [Index](src/msa_lab/reference/index_blockmax.py) · [Selection](src/msa_lab/reference/selection.py) |
-| P2 Routing-KL, gradient ownership, FULL/SPARSE Main | [100 public tests passed](https://github.com/yza-thu-eiri/msa-systems-lab/actions/runs/40902856254) | [MSA layer](src/msa_lab/model/msa_attention.py) · [Routing-KL](src/msa_lab/reference/routing_kl.py) · [Example](examples/routing_walkthrough.py) |
-| P2 TinyLM train/eval/generate and exact resume | [164 public tests and CLI smoke passed](https://github.com/yza-thu-eiri/msa-systems-lab/actions/runs/40988032322) | [Training guide](docs/training.md) · [Engine](src/msa_lab/training/engine.py) · [CPU config](configs/p2_cpu_smoke.json) · [Resume test](tests/test_public_p2_training_resume.py) |
-| P2 historical routing/switch/two-layer studies | Curated historical ledger; synthetic audit and work tools [tested in public CI](https://github.com/yza-thu-eiri/msa-systems-lab/actions/runs/40989283570); original raw runs absent | [Cases 02–04](docs/case-studies/02-routing-error-and-task-impact.md) · [Evidence boundary](docs/p2-experiment-evidence.md) · [Ledger](evidence/p2_historical_summary.json) |
-| GPU-friendly Triton/kernel execution and speedup | **Not established** | Future work |
-| Irregular metadata, backward scheduling, inference runtime | **Not established** | Future work |
-
-## Runnable CPU correctness and training demos
-
-- [P1 fixed-support walkthrough](examples/fixed_support_walkthrough.py): output/LSE parity and manual gradients.
-- [P2 routing walkthrough](examples/routing_walkthrough.py): dynamic Index BlockMax, selected block IDs, effective support and Routing-KL.
-- [C07 four-state walkthrough](examples/c07_four_state_walkthrough.py): synthetic same-weight FF/SF/FS/SS TinyLM execution.
-
-All three examples run on CPU and demonstrate the execution contracts rather than GPU throughput. The [TinyLM CPU training smoke](docs/training.md) additionally exercises a bounded FULL→SPARSE run, checkpoint, evaluation and generation. Historical analysis tooling and its exact provenance limits are described in the [P2 evidence guide](docs/p2-experiment-evidence.md).
-
-## How to navigate
-
-- **Fast technical review:** [01: GPU cost paradox](docs/case-studies/01-fewer-flops-slower-execution.md) · [02: routing-to-task](docs/case-studies/02-routing-error-and-task-impact.md) · [03: sparse training adaptation](docs/case-studies/03-adapting-to-sparse-execution.md) · [04: two-layer propagation](docs/case-studies/04-do-sparse-errors-cascade-across-layers.md).
-- **Evidence discipline and release queue:** [Publication and evidence standards](docs/PUBLICATION.md).
-- **Correctness-first code:** Read the [causal-support contract](docs/reference/causal-support.md), [same-support forward parity](docs/reference/forward-parity.md), and [manual backward derivation](docs/reference/manual-backward.md). The public P1/P2 CPU suite [passed 174 tests](https://github.com/yza-thu-eiri/msa-systems-lab/actions/runs/40989283570), including finite differences, P2 optimizer ownership, exact resume, paired-transition audit, C07 work model, population aggregator and benchmark helper checks.
-- **Run the released tests:** Use Python 3.12, install with `python -m pip install -e ".[test]"`, then `python -m pytest tests/`. For CPU-only PyTorch, see the [CI installation workflow](.github/workflows/reference-tests.yml).
-- **Further reproducibility:** [P2 evidence guide](docs/p2-experiment-evidence.md) separates public analysis tools from original missing C06/C07 checkpoints, dirty-source patch and raw replay records. Synthetic CPU checks do not reproduce historical held-out results.
-
-## Next frontier: turning sparsity into GPU work
-
-The next work asks how to transform a semantically transparent reference into an efficient GPU execution path without silently changing its meaning: SM/warp execution, registers and memory movement, launch overhead, tiling, irregular support, physical GQA K/V reuse, precision, and forward/backward parity.
-
-Any future speedup claim will require a specified baseline, hardware, shapes, dtype, timing methodology, correctness verification, and sampling statistics.
+**Next frontier:** build a GPU-friendly sparse execution path that reproduces the fixed-support oracle before claiming wall-clock speedups. The main engineering unknowns are launch granularity, irregular metadata, memory movement, physical GQA reuse, numeric parity and execution scheduling.
 
 ---
 
-*MSA stands for MiniMax Sparse Attention. This is an unaffiliated, independent educational and engineering investigation.*
-
-*中文简介：围绕稀疏注意力正确性、Router 的实际任务影响以及 GPU 执行效率，将经过验证的技术成果逐步整理为可审阅的工程案例。*
+*MSA = MiniMax Sparse Attention. This repository is an unaffiliated educational and engineering investigation. Licensed under MIT.*
