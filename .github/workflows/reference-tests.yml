@@ -51,6 +51,10 @@ jobs:
         run: python examples/fixed_support_walkthrough.py
       - name: Run P2 router walkthrough
         run: python examples/routing_walkthrough.py
+      - name: Replay synthetic two-layer FF SF FS SS
+        run: python examples/c07_four_state_walkthrough.py
+      - name: Audit synthetic paired predictions
+        run: python scripts/audit_paired_predictions.py --input examples/p2_paired_predictions_synthetic.csv
       - name: Recompute C07 logical-work ratios
         run: python scripts/analyze_c07_work_crossover.py --lengths 128 512 2048 --output artifacts/p2-c07-work-proxy.json
       - name: Train TinyLM through FULL to SPARSE
