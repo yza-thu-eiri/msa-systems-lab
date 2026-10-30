@@ -4,6 +4,7 @@ on:
   push:
     branches: [main]
     paths:
+      - 'README.md'
       - 'src/**'
       - 'tests/**'
       - 'examples/**'
@@ -16,6 +17,7 @@ on:
       - '.github/workflows/reference-tests.yml'
   pull_request:
     paths:
+      - 'README.md'
       - 'src/**'
       - 'tests/**'
       - 'examples/**'
@@ -23,6 +25,7 @@ on:
       - 'scripts/**'
       - 'docs/**'
       - 'evidence/**'
+      - 'benchmarks/**'
       - 'pyproject.toml'
       - '.github/workflows/reference-tests.yml'
 
