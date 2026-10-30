@@ -13,7 +13,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 def test_full_pair_count_counts_causal_triangular_support():
     assert full_pairs(batch=1, sequence_length=4, heads=2) == 20
-    assert sparse_tokens_per_head(sequence_length=4, block_size=2, top_k=2) == 8
+    assert sparse_tokens_per_head(sequence_length=4, block_size=2, top_k=2) == 10
 
 
 @pytest.mark.parametrize(
