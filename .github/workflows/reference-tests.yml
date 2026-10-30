@@ -9,7 +9,8 @@ on:
       - 'examples/**'
       - 'configs/**'
       - 'scripts/**'
-      - 'evidence/p2_historical_summary.json'
+      - 'docs/**'
+      - 'evidence/**'
       - 'benchmarks/**'
       - 'pyproject.toml'
       - '.github/workflows/reference-tests.yml'
@@ -20,7 +21,8 @@ on:
       - 'examples/**'
       - 'configs/**'
       - 'scripts/**'
-      - 'evidence/p2_historical_summary.json'
+      - 'docs/**'
+      - 'evidence/**'
       - 'pyproject.toml'
       - '.github/workflows/reference-tests.yml'
 
@@ -46,7 +48,7 @@ jobs:
       - name: Compile benchmark harness
         run: python -m compileall -q benchmarks scripts
       - name: Run released reference acceptance tests
-        run: python -m pytest tests/
+        run: python -m pytest tests/ -ra
       - name: Run fixed-support walkthrough
         run: python examples/fixed_support_walkthrough.py
       - name: Run P2 router walkthrough
