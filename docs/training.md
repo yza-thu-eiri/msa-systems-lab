@@ -44,6 +44,12 @@ python -m msa_lab.training.generate_cli \
 
 The run writes `config.json`, `run_manifest.json`, `metrics.jsonl`, and a final `checkpoint_final.pt` under the configured `artifacts/` directory (gitignored). Metrics include layer-level execution mode, Router KL, optimizer/Index gradient norms, step time and token counts. No checkpoint/model weight is bundled in this repository.
 
+### Evaluation and generation use the checkpoint execution policy
+
+Train, evaluation and token generation resolve `scheduled`, `full_only` and `fixed_per_layer` using the checkpoint's saved `global_step` and the configured execution policy. Generation passes the full per-layer mode vector to TinyLM instead of silently replacing it with one shared warmup-derived mode.
+
+See [the generation policy regression](../tests/test_generate_main_modes.py) and [evaluation policy checks](../tests/test_eval_cli_modes.py). An initial sparse-generation prompt must contain enough key blocks for the chosen top-k budget; the four-token smoke prompt satisfies `block_size=2, top_k=2`.
+
 ### Resume semantics
 
 Checkpoint contents include model, optimizer, scheduler, optional scaler, trainer step/tokens, global RNG state and the independent data-generator state. A resume validates the training contract; model shape, optimizer-defining and mode-policy changes are rejected. Logging, output path and the **additional number of requested steps** may change.
@@ -63,7 +69,7 @@ Checkpoint contents include model, optimizer, scheduler, optional scaler, traine
 | Runnable training and evidence logging | [Engine](../src/msa_lab/training/engine.py), [CPU config](../configs/p2_cpu_smoke.json), [CI workflow](../.github/workflows/reference-tests.yml) |
 | Tiny Shakespeare corpus identity | [SHA-256 pinned loader](../src/msa_lab/data/tiny_shakespeare.py); source text is not mirrored here |
 
-For a public acceptance run, execute `python -m pytest tests/` or inspect the [GitHub Actions workflow](../.github/workflows/reference-tests.yml). The [completed public CPU run](https://github.com/yza-thu-eiri/msa-systems-lab/actions/runs/40988032322) reports **164 passing tests** and successful train, eval and generate CLI steps. A passing CPU run supports the tested semantics and small-model closure only. It does **not** certify high-throughput training, GPU kernel acceleration, multiple-node distributed execution, long-context routing behavior or the previously reported held-out task statistics.
+For a public acceptance run, execute `python -m pytest tests/` or inspect the [GitHub Actions workflow](../.github/workflows/reference-tests.yml). The [public CI workflow](https://github.com/yza-thu-eiri/msa-systems-lab/actions/workflows/reference-tests.yml) runs the full CPU acceptance suite, train/eval/generate CLI and documentation-link validation. The [CUDA exact-resume regression](../tests/test_cuda_resume.py) is published but **skipped when CUDA is unavailable**; a CPU skip must not be counted as GPU verification. A passing CPU run supports the tested semantics and small-model closure only. It does **not** certify high-throughput training, GPU kernel acceleration, multiple-node distributed execution, long-context routing behavior or the previously reported held-out task statistics.
 
 ## Next experimental evidence
 
