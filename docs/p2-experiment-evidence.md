@@ -49,6 +49,19 @@ Expected layout: `<audit-root>/<checkpoint-name>/batch_*.json`; the source schem
 
 **Important:** the actual historical JSON inputs are not present. This command cannot reconstruct missing checkpoints or replay files from the historical summary ledger.
 
+## Historical diagnostic figures (original bytes, not reproduced)
+
+Four **existing** P2 images were reviewed for visible private paths and copied byte-for-byte from the private `learn/phase2` revision. The image file Git blob hashes match the private originals. They visualize the recorded C06 investigation but are **not** new analysis outputs from public runs.
+
+| Figure and interpretation | Exact source Git blob SHA | Public image |
+| --- | --- | --- |
+| LM loss vs Router KL divergence | `5089247015f6faac48f9dc146c8fbd89ebbef12b` | [01](assets/router/01_joint_training_divergence.png) |
+| Parameter/operator changes after the fixed-batch KL plateau | `cafd84894840d0d0b9663846c3a34b28e8b8ea2c` | [05](assets/router/05_fixed_batch_function_audit.png) |
+| Layer-1 attention → NTP task-effect chain | `280a64470f6b320966c31c2133835e088bee1705` | [06](assets/router/06_layer1_token_effect_chain.png) |
+| Correctness cohort sizes and NTP decomposition | `89ec7085cb3fc9f8c9ee77ec3f22be4683d73bc0` | [07](assets/router/07_layer1_token_cohorts.png) |
+
+The private figure-generation scripts and original historical `runs/` are not present in the public checkout. Images provide a more inspectable explanation of the historical diagnosis, **not** evidence of independent numerical reproduction. The private figures were displayed and visually checked for path/personal disclosures prior to migration.
+
 ## Historical source and artifact provenance
 
 The machine-readable [`p2_historical_summary.json`](../evidence/p2_historical_summary.json) records the original private review document Git blob IDs and the locally recorded SHA-256 IDs of selected artifacts, including:
