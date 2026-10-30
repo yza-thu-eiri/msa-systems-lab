@@ -2,7 +2,7 @@
 
 > **Question:** A low-dimensional block router reaches a nonzero Routing-KL plateau. Does that mean sparse attention fails at the language-model task?
 >
-> **Status:** Interpretation of recorded internal small-model experiments. Training scripts, raw artifacts, and checkpoints are **not yet public**. The observations are not independent production or long-context validation.
+> **Status:** Interpretation of recorded internal small-model experiments. The public Router/Training code and synthetic CPU tests are available, but the original historical token-level audit and training checkpoints are **not public**. These observations remain recorded internal small-model results, not independently reproduced GPU or long-context validation.
 
 ## 1. Trace consequences across system layers
 
@@ -105,4 +105,12 @@ A separate **7-checkpoint × 4-held-out-batch** frozen population audit found on
 
 **Not established:** a unique explanation for KL saturation, universal relationships among KL/coverage/task loss, stable deep or long-context routing, a competitive sparse GPU kernel, or a production speedup.
 
-**Reproduction status:** Release of source/configs, paired evaluation scripts, selected run outputs, and evidence provenance remains pending.
+## 7. Public analysis tools and provenance
+
+The public [historical summary ledger](../../evidence/p2_historical_summary.json) records the distinct experimental contexts, exact reported values, source-document Git blob identities, and SHA-256 identifiers for selected **local** artifacts. It is a curated *transcription* from the closed private Phase 2 review, not raw model output.
+
+The generic [paired prediction auditor](../../scripts/audit_paired_predictions.py) computes correct→wrong, wrong→correct and wrong→wrong transitions from a reader-supplied CSV with columns `full_prediction,sparse_prediction,target_token`. [Synthetic acceptance tests](../../tests/test_p2_historical_evidence_audit.py) check the transition arithmetic. Neither the utility nor the ledger can replace the missing 83,616-row original CSV.
+
+**Reproduction status:** The public [TinyLM training engine](../training.md), Router/Selection reference and tests are available and CI-verified. The original C06 checkpoint, per-token audit CSV and full run manifests are still absent. The historical run's base Git commit was recorded but the full dirty-worktree patch was not preserved, so exact source reconstruction from that commit alone is not justified. Historical numerical claims must remain at the *recorded internal observation* evidence level.
+
+Follow-on investigations: [Sparse switch adaptation](03-adapting-to-sparse-execution.md) and [two-layer support propagation](04-do-sparse-errors-cascade-across-layers.md).
