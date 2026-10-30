@@ -50,3 +50,40 @@ def test_routing_kl_empty_support_is_finite_and_zero():
     assert loss.requires_grad
     assert torch.isfinite(loss)
     torch.testing.assert_close(loss, torch.zeros_like(loss))
+
+
+def test_routing_kl_ignores_unselected_tokens_and_padding_slots():
+    """Unselected K values and unused token-capacity slots cannot alter KL."""
+    torch.manual_seed(4)
+    q = torch.randn(1, 3, 1, 2)
+    k = torch.randn(1, 3, 1, 2)
+    qi = torch.randn(1, 3, 1, 2)
+    ki = torch.randn(1, 3, 1, 2)
+    support = torch.zeros(1, 3, 1, 3, dtype=torch.bool)
+    support[..., 0] = True
+    support[..., 2] = True
+    minimum = routing_kl_gqa(q, k, qi, ki, support, token_capacity=2)
+    padded = routing_kl_gqa(q, k, qi, ki, support, token_capacity=3)
+    altered_k, altered_ki = k.clone(), ki.clone()
+    altered_k[:, 1] = 10000
+    altered_ki[:, 1] = -10000
+    changed = routing_kl_gqa(q, altered_k, qi, altered_ki, support, token_capacity=3)
+    torch.testing.assert_close(minimum, padded)
+    torch.testing.assert_close(minimum, changed)
+
+
+def test_removing_teacher_detach_exposes_main_gradient():
+    """Negative control: without detach, the Main teacher receives KL gradients."""
+    from unittest.mock import patch
+
+    q = torch.ones(1, 2, 1, 1, requires_grad=True)
+    k = torch.tensor([[[[math.log(0.75)]], [[math.log(0.25)]]]], requires_grad=True)
+    qi = torch.ones(1, 2, 1, 1, requires_grad=True)
+    ki = torch.tensor([[[[math.log(0.60)]], [[math.log(0.40)]]]], requires_grad=True)
+    support = torch.ones(1, 2, 1, 2, dtype=torch.bool)
+    # Only modify detach inside this negative control; production stays frozen.
+    with patch.object(torch.Tensor, "detach", lambda tensor: tensor):
+        loss = routing_kl_gqa(q, k, qi, ki, support, token_capacity=2)
+    loss.backward()
+    assert q.grad is not None and q.grad.abs().sum() > 0
+    assert k.grad is not None and k.grad.abs().sum() > 0
