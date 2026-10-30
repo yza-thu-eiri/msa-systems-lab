@@ -38,7 +38,7 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install torch==2.11.0 --index-url https://download.pytorch.org/whl/cpu
           python -m pip install --no-deps -e .
-          python -m pip install numpy==2.5.1 pytest==9.1.1
+          python -m pip install numpy==2.5.1 pytest==9.1.1 tensorboard==2.21.0
       - name: Compile benchmark harness
         run: python -m compileall -q benchmarks
       - name: Run released reference acceptance tests
