@@ -6,7 +6,7 @@ import torch
 from msa_lab.config import ExperimentConfig
 from msa_lab.model.tiny_lm import TinyCausalLM
 from msa_lab.training.generate import greedy_generate
-from msa_lab.training.mode import main_mode_for_step
+from msa_lab.training.eval_cli import checkpoint_main_modes
 
 
 def main() -> None:
@@ -21,17 +21,15 @@ def main() -> None:
     model = TinyCausalLM(cfg.model).to(device)
     payload = torch.load(args.checkpoint, map_location=device, weights_only=False)
     model.load_state_dict(payload["model"])
-    main_mode = main_mode_for_step(
-        payload["trainer_state"]["global_step"],
-        cfg.train.warmup_steps,
-    )
+    main_modes = checkpoint_main_modes(cfg, payload)
     prompt = torch.tensor([[int(x) for x in args.prompt.split(",")]], device=device)
     print(
         greedy_generate(
             model,
             prompt,
             max_new_tokens=args.max_new_tokens,
-            main_mode=main_mode,
+            main_mode=None,
+            main_modes=main_modes,
         ).cpu().tolist()
     )
 
