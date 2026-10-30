@@ -1,0 +1,19 @@
+{
+  "model": {
+    "vocab_size": 65,
+    "max_seq_len": 128,
+    "d_model": 128,
+    "n_layers": 2,
+    "n_q_heads": 4,
+    "n_kv_heads": 2,
+    "d_ff": 256,
+    "dropout": 0,
+    "msa_layer_ids": [
+      0,
+      1
+    ],
+    "msa_index_dim": 16,
+    "msa_block_size": 16,
+    "msa_top_k": 2
+  }
+}
