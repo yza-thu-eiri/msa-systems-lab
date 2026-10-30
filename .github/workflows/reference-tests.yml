@@ -8,6 +8,8 @@ on:
       - 'tests/**'
       - 'examples/**'
       - 'configs/**'
+      - 'scripts/**'
+      - 'evidence/p2_historical_summary.json'
       - 'benchmarks/**'
       - 'pyproject.toml'
       - '.github/workflows/reference-tests.yml'
@@ -17,6 +19,8 @@ on:
       - 'tests/**'
       - 'examples/**'
       - 'configs/**'
+      - 'scripts/**'
+      - 'evidence/p2_historical_summary.json'
       - 'pyproject.toml'
       - '.github/workflows/reference-tests.yml'
 
@@ -40,13 +44,15 @@ jobs:
           python -m pip install --no-deps -e .
           python -m pip install numpy==2.5.1 pytest==9.1.1 tensorboard==2.21.0
       - name: Compile benchmark harness
-        run: python -m compileall -q benchmarks
+        run: python -m compileall -q benchmarks scripts
       - name: Run released reference acceptance tests
         run: python -m pytest tests/
       - name: Run fixed-support walkthrough
         run: python examples/fixed_support_walkthrough.py
       - name: Run P2 router walkthrough
         run: python examples/routing_walkthrough.py
+      - name: Recompute C07 logical-work ratios
+        run: python scripts/analyze_c07_work_crossover.py --lengths 128 512 2048 --output artifacts/p2-c07-work-proxy.json
       - name: Train TinyLM through FULL to SPARSE
         run: python -m msa_lab.training.cli --config configs/p2_cpu_smoke.json
       - name: Evaluate released TinyLM checkpoint
