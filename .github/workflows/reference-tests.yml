@@ -7,6 +7,7 @@ on:
       - 'src/**'
       - 'tests/**'
       - 'examples/**'
+      - 'configs/**'
       - 'benchmarks/**'
       - 'pyproject.toml'
       - '.github/workflows/reference-tests.yml'
@@ -15,6 +16,7 @@ on:
       - 'src/**'
       - 'tests/**'
       - 'examples/**'
+      - 'configs/**'
       - 'pyproject.toml'
       - '.github/workflows/reference-tests.yml'
 
@@ -45,3 +47,10 @@ jobs:
         run: python examples/fixed_support_walkthrough.py
       - name: Run P2 router walkthrough
         run: python examples/routing_walkthrough.py
+      - name: Train TinyLM through FULL to SPARSE
+        run: python -m msa_lab.training.cli --config configs/p2_cpu_smoke.json
+      - name: Evaluate released TinyLM checkpoint
+        run: python -m msa_lab.training.eval_cli --config configs/p2_cpu_smoke.json --checkpoint artifacts/p2-cpu-smoke/checkpoint_final.pt
+      - name: Generate from released TinyLM checkpoint
+        run: python -m msa_lab.training.generate_cli --config configs/p2_cpu_smoke.json --checkpoint artifacts/p2-cpu-smoke/checkpoint_final.pt --prompt 0 --max-new-tokens 2
+
