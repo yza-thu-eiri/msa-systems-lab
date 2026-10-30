@@ -1,0 +1,147 @@
+{
+  "schema_version": "p2-historical-summary/1",
+  "status": "recorded_internal_summary_not_raw_measurements",
+  "verification_boundary": "Values transcribed from the frozen private P2 reading guide and Gate P2 handoff. Public source and CPU tests do not independently reproduce these historical GPU/held-out experiments.",
+  "provenance": {
+    "review_guide": {
+      "source": "docs/learning/MSA_ROUTER_REVIEW_GUIDE.md (private learn/phase2)",
+      "git_blob_sha": "61793213d3757b073e7571ead8b05c7a53047ebf"
+    },
+    "gate_handoff": {
+      "source": "docs/course_context/courses/phase2/GATE_P2/HANDOFF.md (private learn/phase2)",
+      "git_blob_sha": "7019a2a061448230683d463665c83d94f6d9463c"
+    },
+    "deep_playbook": {
+      "source": "docs/learning/ROUTER_TRAINING_DIAGNOSTIC_PLAYBOOK.md (private learn/phase2)",
+      "git_blob_sha": "ee7e6a979247a5a5ea8cf635fceb2c6fc0716afd"
+    },
+    "raw_replay_source_commit": "b8164e5b25fd4f407e934bfb2068c6a141eeb887",
+    "source_warning": "Original recorded runs used an uncommitted working-tree modification without a preserved full patch. This commit alone cannot exactly reconstruct their code.",
+    "phase2_local_closure_commit": "2371cda (recorded locally; not verified pushed)",
+    "artifacts_present_in_public_repo": false,
+    "example_local_artifact_checksums": {
+      "c06_token_effects_summary_sha256": "2ed3e42b80a294212d49d788df6f680718664c98fbc7e640ec0cd2545d2489bc",
+      "c07_common_anchor_sha256": "28d7bf4ed93eb2e5bf464f25a65d8a2a2bbd39d7efe03c2e96485c29376a7ac8",
+      "c07_population_summary_sha256": "50db4dccd9c7a39e49c0d60f3719a46ac60072b10237366772d4843bf556fdae",
+      "c07_schedule_summary_sha256": "f79ba82945be7221103d411ad07d0e873142aea506fca286a7a99d8b9d6b9ddd"
+    }
+  },
+  "studies": {
+    "router_kl_fit": {
+      "context": "Distinct frozen-Main fitting controls (do not merge with the task replay)",
+      "fixed_pool32_mean_kl_approx": 0.205,
+      "rotating_microbatch8_late_mean_kl": 0.2047953,
+      "full_pool_matched_mean_kl": 0.2047993
+    },
+    "layer1_heldout_paired": {
+      "context": "C06 layer1/step50k paired FULL/SPARSE replay; sparse-active prediction positions",
+      "positions": 83616,
+      "teacher_mass_coverage": 0.957631,
+      "full_top1_accuracy_rounded": 0.54988,
+      "sparse_top1_accuracy_rounded": 0.54409,
+      "changed_top1_predictions": 3951,
+      "correct_to_wrong": 1175,
+      "wrong_to_correct": 691,
+      "wrong_to_wrong_different": 2085
+    },
+    "forced_local_same_checkpoint": {
+      "context": "C06 fixed single-layer checkpoint, block_size=16, top_k=2; only legal support policy differs",
+      "forced": {
+        "coverage": 0.957631,
+        "mean_ntp_loss": 1.656358
+      },
+      "unforced": {
+        "coverage": 0.961279,
+        "mean_ntp_loss": 1.653112
+      }
+    },
+    "c06_single_layer_mode_fork": {
+      "context": "Common step20k state; 100-step single-seed FULL-control vs SPARSE-trained fork; same-weight paired endpoint evaluation",
+      "full_trained_weights": {
+        "full_execution_ntp": 1.645637,
+        "sparse_execution_ntp": 1.659541,
+        "reported_gap_rounded": 0.013903
+      },
+      "sparse_trained_weights": {
+        "full_execution_ntp": 1.640796,
+        "sparse_execution_ntp": 1.645459,
+        "reported_gap_rounded": 0.004663
+      },
+      "reported_gap_reduction_percent": 66.46,
+      "note": "Reported gap has source rounding beyond the displayed NTP values; compare only approximately."
+    },
+    "c07_schedule": {
+      "context": "Dual-MSA, same-anchor training forks; FP32 held-out at matching horizon per schedule. Ratios are logical Main attention QK/PV pairs, not measured GPU runtime.",
+      "options": [
+        {
+          "path": "FF->SF->SS",
+          "horizon_step": 20100,
+          "fp32_heldout_ntp_gap_vs_sync_ss": -0.00043318,
+          "main_pairs_ratio_vs_sync_ss": 1.09333,
+          "forward_only_proxy_ratio_vs_sync_ss": 1.00631
+        },
+        {
+          "path": "FF->FS->SS",
+          "horizon_step": 20200,
+          "fp32_heldout_ntp_gap_vs_sync_ss": -0.00016937,
+          "main_pairs_ratio_vs_sync_ss": 1.46667,
+          "forward_only_proxy_ratio_vs_sync_ss": 1.03155
+        }
+      ],
+      "forward_work_proxy_ss_over_ff_by_length": [
+        {
+          "sequence_length": 128,
+          "ratio": 0.9812
+        },
+        {
+          "sequence_length": 512,
+          "ratio": 0.7552
+        },
+        {
+          "sequence_length": 2048,
+          "ratio": 0.4304
+        }
+      ]
+    },
+    "c07_population": {
+      "context": "7 frozen checkpoints x 4 nonoverlapping held-out batches each, CUDA BF16; descriptive checkpoint means/ranges, NOT independent seeds",
+      "checkpoints": 7,
+      "batches_per_checkpoint": 4,
+      "sparse_active_positions_per_checkpoint": 3072,
+      "layer1_changed_support_row_rate_range": [
+        0.00228,
+        0.00488
+      ],
+      "layer1_support_mean_token_jaccard_range": [
+        0.99597,
+        0.99822
+      ],
+      "centered_logit_interaction_over_ff_rms_range": [
+        0.01068,
+        0.01454
+      ],
+      "loss_interaction_mean_range": [
+        -0.001164,
+        0.000107
+      ],
+      "top1_changed_rate_from_ff_ranges": {
+        "sf": [
+          0.01986,
+          0.02507
+        ],
+        "fs": [
+          0.02767,
+          0.04655
+        ],
+        "ss": [
+          0.03678,
+          0.05176
+        ]
+      },
+      "ss_trained_same_weight_ss_minus_ff_accuracy_gap_pp": {
+        "step20100": 0.065,
+        "step20200": -0.065
+      }
+    }
+  }
+}
