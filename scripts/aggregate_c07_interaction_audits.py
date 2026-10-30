@@ -101,6 +101,8 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--audit-root", type=Path, required=True,
                         help="directory containing per-checkpoint/batch_*.json")
+    parser.add_argument("--precision", default="unspecified",
+                        help="precision of supplied replay records; not inferred from JSON")
     parser.add_argument("--output", type=Path, default=ROOT / "artifacts/c07_population_summary.json")
     args = parser.parse_args()
     if not args.audit_root.is_dir():
@@ -134,7 +136,7 @@ def main() -> None:
     if not summaries:
         raise RuntimeError("没有找到 population interaction audit records")
     result = {
-        "precision": "CUDA BF16",
+        "precision": args.precision,
         "population": "Per-checkpoint held-out batches, see counts; checkpoints are not independent seeds",
         "checkpoints": summaries,
         "boundary": "descriptive fixed population; not a seed-level confidence interval",
